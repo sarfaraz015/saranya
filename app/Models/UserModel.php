@@ -106,6 +106,8 @@ public function checkUserTimeout($token)
         return $query->getRow();
 }
 
+
+
 public function resetUsersTimeout($token,$data)
 {
         $this->db->table('users_tokens')
@@ -144,6 +146,55 @@ public function clearInvalidLoginAttempts($email)
         ->delete();
 }
 
+public function insertOTP($data)
+{
+        $this->db->table('users_otp')
+                   ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;         
+}
+
+public function updateNewPassword($data,$user_id)
+{
+        $this->db->table('users')
+        ->where('uid', $user_id)
+        ->update($data);
+}
+
+public function deactivateOTPOnResetPassword($user_id,$otp)
+{
+        date_default_timezone_set('Asia/Kolkata');
+        $currentDate = date("Y:m:d H:i:s");
+        $this->db->table('users_otp')
+        ->where('otp', $otp)
+        ->where('uid',$user_id)
+        ->update([
+                'otp_active_status'=>0,
+                'updated_at'=>$currentDate
+        ]);
+}
+
+
+public function deactivateOldOTP($user_id)
+{
+        date_default_timezone_set('Asia/Kolkata');
+        $currentDate = date("Y:m:d H:i:s");
+        $this->db->table('users_otp')
+        ->where('uid',$user_id)
+        ->update([
+                'otp_active_status'=>0,
+                'updated_at'=>$currentDate
+        ]);
+}
+
+
+
+public function checkOTPTimeout($user_id,$otp)
+{
+        $q = "SELECT * FROM users_otp WHERE `uid` ='{$user_id}' AND otp = '{$otp}'";
+        $query = $this->db->query($q); 
+        return $query->getRow();
+}
 
 
 }

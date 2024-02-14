@@ -77,7 +77,6 @@ public function checkTimeOut($user_id,$token)
 }
 
 
-
 public function verifyTokenIsValid($token)
 {
         $row = $this->db->table('users_tokens')
@@ -104,6 +103,59 @@ public function checkLoginAttemptsExceed($email)
 
 
 
+
+public function sendOTPEmail($email,$otp)
+{
+        $emailService = \Config\Services::email();
+        $emailService->setTo($email);
+        $emailService->setSubject('Password reset verification');
+        $message = "<b>Verification code : {$otp} <br><br> Thanks for using lambda infinity</b>";
+        $emailService->setMessage($message);
+        
+        if ($emailService->send()) 
+        {
+                return 1;
+        } 
+        else 
+        {
+            return 0;
+        }
+}
+
+
+public function verifyOTP($otp)
+{
+	$q = "SELECT * FROM users_otp WHERE otp='{$otp}' AND otp_active_status=1";
+	$query = $this->db->query($q);
+	return $query->getRow();
+}
+
+
+
+public function checkTimeOutForOTP($user_id,$otp)
+{
+	date_default_timezone_set('Asia/Kolkata');
+	$currentDate = date("Y:m:d H:i:s");
+	$OTPTimeOutStatus = '';
+
+			$row = $this->usermodel->checkOTPTimeout($user_id,$otp);
+			$created_at = $row->created_at;
+
+			$currentDate = strtotime($currentDate);
+			$created_at = strtotime($created_at);
+
+			$diff = abs($currentDate - $created_at);
+			
+			if($diff > 60*1)
+			{
+				$OTPTimeOutStatus = 0;	
+			}
+			else
+			{
+				$OTPTimeOutStatus = 1;
+			}
+		return $OTPTimeOutStatus;
+}
 
 
 

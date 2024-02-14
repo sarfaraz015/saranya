@@ -206,7 +206,8 @@ public function login()
         {
             $dbPassword = $this->userlibrary->checkUserAlreadyExists($email)->password;
     
-            if (!password_verify($password, $dbPassword)) {
+            if (!password_verify($password, $dbPassword)) 
+            {
                 $this->usermodel->increaseUsersInvalidLoginAttempts($this->request->getIPAddress(),$email,time());
                 $response['message'] = "Invalid password";
                 $response['response'] = false;
@@ -301,6 +302,160 @@ public function login()
     }
    
 }
+
+
+public function generateOTP()
+{
+   $currentDate = time();
+   return substr($currentDate,-4);
+}
+
+
+
+public function forgot_password()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+        $response = [];
+        $errorCode = '';
+
+        $rules = [
+            'email'=>'required|valid_email',
+        ];
+
+        if(!$this->validate($rules))
+        {
+            $response['errors'] = $this->validator->getErrors();
+            $errorCode = 401;
+            $response['response'] = false;
+            return $this->response->setJSON($response)->setStatusCode($errorCode);
+        }
+
+        $json_data = $this->request->getJSON();
+        $email = trim($json_data->email);
+
+        if($this->userlibrary->checkUserAlreadyExists($email))
+        {
+            $otp = $this->generateOTP();
+            $userId = $this->usermodel->getUserId($email);
+            $this->usermodel->deactivateOldOTP($userId);
+            date_default_timezone_set('Asia/Kolkata');
+            $currentDate = date("Y:m:d H:i:s");
+
+            $data = array(
+                'uid'=>$userId,
+                'email'=>$email,
+                'otp'=>$otp,
+                'otp_active_status'=>1,
+                'created_at'=>$currentDate
+            );
+
+            if($this->usermodel->insertOTP($data))
+            {
+                $response['message'] = "OTP generated successfully";
+				$response['otp'] = $otp;
+				$errorCode = 200;
+                if($this->userlibrary->sendOTPEmail($email,$otp))
+                {
+                    $response['mail_status'] = "Mail sent successfully";
+                    $response['response'] = true;
+                }
+                else
+                {
+                    $response['mail_status'] = "Mail failed";
+                    $response['response'] = false;
+                }
+            }
+        }
+        else
+        {
+            $response['message'] = "Invalid email-id";
+            $response['response'] = false;
+            $errorCode = 401; 
+        }
+        return $this->response->setJSON($response)->setStatusCode($errorCode);
+    }    
+
+}
+
+
+public function resetPassword($user_id,$newPassword,$otp)
+{
+    $OTPTimeOutStatus = '';
+    
+    if($this->userlibrary->checkTimeOutForOTP($user_id,$otp))
+    {
+        $updated_data = array(
+            'password'=>$newPassword
+        );
+        $this->usermodel->updateNewPassword($updated_data,$user_id);
+        $OTPTimeOutStatus = 1;
+    }
+    else
+    {
+        $OTPTimeOutStatus = 0;
+    }
+	
+    return $OTPTimeOutStatus;
+}
+
+
+public function reset_password()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+        $response = [];
+        $errorCode = '';
+        $rules = [
+            'otp'=>'required',
+            'new_password'=>'required',
+            'confirm_password'=>'required|matches[new_password]',
+        ];
+
+        if(!$this->validate($rules))
+        {
+            $response['errors'] = $this->validator->getErrors();
+            $errorCode = 401;
+            $response['response'] = false;
+            return $this->response->setJSON($response)->setStatusCode($errorCode);
+        }
+
+        $json_data = $this->request->getJSON();
+        $otp = trim($json_data->otp);
+        $new_password = trim($json_data->new_password);
+
+           if($user_id = isset($this->userlibrary->verifyOTP($otp)->uid)?$this->userlibrary->verifyOTP($otp)->uid:0)
+		   {
+                $this->usermodel->deactivateOTPOnResetPassword($user_id,$otp);
+                if($this->resetPassword($user_id,password_hash($new_password,PASSWORD_DEFAULT),$otp))
+                {
+                    $response['message']="Password updated successfully";
+					$response['response']=true;
+					$errorCode = 200; 
+                }
+                else
+                {
+                    $response['message']="Password updation failed";
+                    $response['error']="OTP expired";
+					$response['response']=false;
+					$errorCode = 401;
+                }
+           }
+           else
+           {
+                $response['message']="Invalid OTP";
+                $response['response']=false;
+                $errorCode = 401;
+           }
+
+           return $this->response->setJSON($response)->setStatusCode($errorCode);
+    }
+
+}
+
+
+
+
 
 
 
