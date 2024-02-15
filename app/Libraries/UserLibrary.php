@@ -158,6 +158,31 @@ public function checkTimeOutForOTP($user_id,$otp)
 }
 
 
+public function getTesterToken($length,$numbers,$alphabets,$symbols)
+{
+		$finalKey = '';
+		$bytes = random_bytes($length);
+
+        $numbersKeys = bin2hex($bytes);
+		$alphabetsKeys = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		$symbolsKeys = "@#$%^&*_+=?|";
+
+		$numbersFinalKey = $numbers=="true"?$numbersKeys:'';
+		$alphabetsFinalKey = $alphabets=="true"?$alphabetsKeys:'';
+		$symbolsFinalKey = $symbols=="true"?$symbolsKeys:'';
+		
+		$finalKey = $numbersFinalKey.$alphabetsFinalKey.$symbolsFinalKey;
+
+		if($numbers=="false" && $alphabets=="false" && $symbols=="false")
+		{
+			  $finalKey = $numbersKeys.$alphabetsKeys.$symbolsKeys;
+		}
+
+		$tester_token = substr(str_shuffle($finalKey),0,$length);
+		return $tester_token;
+}
+
+
 
 
 }

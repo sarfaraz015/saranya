@@ -35,7 +35,7 @@ public function getUserId($email)
 {
         $q = "SELECT * FROM users WHERE email='{$this->dataHandler->encryptAndStore($email)}'";
         $query = $this->db->query($q);  
-        return $query->getRow()->uid;                
+        return $query->getRow()?$query->getRow()->uid:'';                
 }
 
     

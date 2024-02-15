@@ -31,3 +31,5 @@ $routes->post('/forgot_password', 'UserController::forgot_password');
 $routes->post('/reset_password', 'UserController::reset_password');
 
 $routes->get('/otp_time_out', 'UserController::otp_time_out');
+
+$routes->post('/generate_tester_token', 'UserController::generate_tester_token');

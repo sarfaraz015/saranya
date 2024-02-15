@@ -7,6 +7,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\UserModel;
 use App\Libraries\UserLibrary;
 use App\Libraries\SecureDataHandler;
+use Config\Tester;
 
 class UserController extends BaseController
 {
@@ -15,6 +16,8 @@ class UserController extends BaseController
     public $userlibrary;
     public $dataHandler;
 
+    public $tester;
+
     public function __construct()
     {
            $secret_key = $_ENV['ENCRYPTION_KEY'];
@@ -22,6 +25,7 @@ class UserController extends BaseController
            $this->usermodel = new UserModel();
            $this->userlibrary = new UserLibrary();
            $this->dataHandler = new SecureDataHandler($secret_key, $salt);
+           $this->tester = new Tester();
     }
     public function index()
     {
@@ -454,11 +458,6 @@ public function reset_password()
 }
 
 
-
-
-
-
-
 public function logout()
 {
     $response = [];
@@ -512,20 +511,99 @@ public function decryptDataRow($data)
     return $arr;
 }
 
+
+public function testerToken()
+{
+	$response = [];
+	$error_code = '';
+	$users = $this->tester->getTestersData();
+    
+	$token = $this->request->getHeader('Authorization');
+	$email = $this->request->getHeader('testerEmail');
+
+	if($token!='')
+	{
+			if($email!='')
+			{
+				if(array_key_exists($email->getValue(),$users))
+				{
+					if('Bearer '.$users[$email->getValue()]==$token->getValue())
+					{
+						$response['message']="success";
+						$response['response'] = true;
+					}
+					else
+					{
+						$response['message']="Invalid tester token";
+						$response['response'] = false;
+					}
+                }
+                else
+                {
+                        $response['message']="Invalid tester email-id";
+                        $response['response'] = false;
+                }
+			}
+			else
+			{
+				$response['message']="No tester email-id found";
+				$response['response'] = false;
+			}
+	}
+	else
+	{
+		$response['message']="No tester token found";
+		$response['response'] = false;
+	}
+
+	return $response;
+}
+
 public function get_user_data()
 {
+    $byPass = false;
+    $tester_token = '';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
     $response = [];
 	$errorCode = '';
 
-    $token = $this->request->getHeader('token');
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
 
     if($token!='')
     {
-        $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
-        if($userdata)
+        $uid = '';
+        if($byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
-            $result = $this->usermodel->getUserDetails($userdata->uid);
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->usermodel->getUserDetails($uid);
 
             if(!$checkTimeoutStatus)
             {
@@ -539,9 +617,18 @@ public function get_user_data()
         }
         else
         {
-            $response['message']= "Invalid user token";
-            $response['response']=false;
-            $errorCode = 401;
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $errorCode = 401;
+            }
         }
     }
     else
@@ -555,11 +642,55 @@ public function get_user_data()
 
 }
 
+
+
 public function testcode()
 {
     // echo "calling testcode";die;
     echo $this->dataHandler->retrieveAndDecrypt('blE6TiTGYJ241aPpWaMLzsAhw9u0fcUOi3i0gJxX0CU=');
     die;
+}
+
+
+
+
+function generate_tester_token()
+{
+    // echo "calling tester token";die;
+
+    if ($this->request->getMethod() === 'post') 
+    {
+        $response = [];
+        $errorCode = '';
+
+        $rules = [
+            'password_length'=>'required|numeric|greater_than_equal_to[8]',
+            'alphabets'=>'required|in_list[true,false]',
+            'numbers'=>'required|in_list[true,false]',
+            'symbols'=>'required|in_list[true,false]',
+        ];
+
+        if(!$this->validate($rules))
+        {
+            $response['errors'] = $this->validator->getErrors();
+            $errorCode = 401;
+            $response['response'] = false;
+            return $this->response->setJSON($response)->setStatusCode($errorCode);
+        }
+
+        // echo "proccedd valid";die;
+        $json_data = $this->request->getJSON();
+        $length = trim($json_data->password_length);
+        $alphabets = trim($json_data->alphabets);
+        $numbers = trim($json_data->numbers);
+        $symbols = trim($json_data->symbols);
+
+
+        $tester_token = $this->userlibrary->getTesterToken($length,$numbers,$alphabets,$symbols);
+        print_r($tester_token);die;
+        return $this->response->setJSON($response)->setStatusCode($errorCode);
+    }
+	
 }
 
 
