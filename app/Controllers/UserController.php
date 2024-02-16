@@ -8,6 +8,7 @@ use App\Models\UserModel;
 use App\Libraries\UserLibrary;
 use App\Libraries\SecureDataHandler;
 use Config\Tester;
+use App\Libraries\Lib_log;
 
 class UserController extends BaseController
 {
@@ -20,6 +21,7 @@ class UserController extends BaseController
 
     public function __construct()
     {
+           $testlib = new Lib_log();
            $secret_key = $_ENV['ENCRYPTION_KEY'];
            $salt = $_ENV['SALT'];
            $this->usermodel = new UserModel();
@@ -656,8 +658,6 @@ public function testcode()
 
 function generate_tester_token()
 {
-    // echo "calling tester token";die;
-
     if ($this->request->getMethod() === 'post') 
     {
         $response = [];
