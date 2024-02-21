@@ -18,7 +18,6 @@ public function __construct()
 	$this->dataHandler = new SecureDataHandler($secret_key, $salt);
 }
 
-
 public function checkUserAlreadyExists($email)
 {
 	$q = "SELECT * FROM users WHERE `email` ='{$this->dataHandler->encryptAndStore($email)}'";
@@ -26,15 +25,12 @@ public function checkUserAlreadyExists($email)
 	return $query->getRow();
 }
 
-
 public function userExistsInUsersToken($userId)
 {
 	$q = "SELECT * FROM users_tokens WHERE `uid` = {$userId}";
 	$query = $this->db->query($q); 
 	return $query->getRow();
 }
-
-
 
 public function checkActiveStatus($userId)
 {
@@ -76,7 +72,6 @@ public function checkTimeOut($user_id,$token)
 		return $userTimeOutStatus;
 }
 
-
 public function verifyTokenIsValid($token)
 {
         $row = $this->db->table('users_tokens')
@@ -86,7 +81,6 @@ public function verifyTokenIsValid($token)
                 ->getRow();     			  
         return $row;
 }
-
 
 public function checkLoginAttemptsExceed($email)
 {
@@ -100,9 +94,6 @@ public function checkLoginAttemptsExceed($email)
 	}
 	return $status;
 }
-
-
-
 
 public function sendOTPEmail($email,$otp)
 {
@@ -122,14 +113,12 @@ public function sendOTPEmail($email,$otp)
         }
 }
 
-
 public function verifyOTP($otp)
 {
 	$q = "SELECT * FROM users_otp WHERE otp='{$otp}' AND otp_active_status=1";
 	$query = $this->db->query($q);
 	return $query->getRow();
 }
-
 
 
 public function checkTimeOutForOTP($user_id,$otp)
@@ -182,6 +171,56 @@ public function getTesterToken($length,$numbers,$alphabets,$symbols)
 		return $tester_token;
 }
 
+
+public function checkTemperorlyBlockedUserAndActivate($email)
+{
+	$lastAttemptRecord = $this->usermodel->getLastAttemptRecord($email);	  
+	$lastAttemptDate = $lastAttemptRecord->time;
+
+	date_default_timezone_set('Asia/Kolkata');
+    $currentDate = date("Y:m:d H:i:s");
+ 
+    $lastEpocDate = strtotime("+1 minutes", $lastAttemptDate);
+    $finalDate = date('Y:m:d H:i:s', $lastEpocDate);
+
+	if(strtotime($currentDate) > strtotime($finalDate))
+	{
+		$this->usermodel->clearInvalidLoginAttempts($email);
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
+
+public function storeLogs($fun,$userdata,$token)
+{
+    $logResult = [];
+    $logResult['called_class'] = $fun[0]['class'];
+    $logResult['called_method'] = $fun[0]['function'];
+    
+    $currentURL = current_url();
+    $logResult['called_api'] = preg_replace('/\/index.php/','', $currentURL);
+
+	$logResult['ip_address'] = $_SERVER['REMOTE_ADDR'];
+	$logResult['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+
+	date_default_timezone_set('Asia/Kolkata');
+	$currentDateTime = date("Y:m:d H:i:s");
+	$logResult['hit_date_time'] = $currentDateTime;
+	$logResult['uid'] = $userdata->uid;
+
+	$arr['access_key'] = "67hthyd777==ljdsbsdjf";
+	$arr['screte_key'] = "fvdshchsjcasjdhadjhsadkask";
+	$arr['token'] = $token;
+	$logResult['user_input_data'] = json_encode($arr);
+
+	$this->usermodel->storeUserLogHistory($logResult);
+    return $logResult;
+}
 
 
 

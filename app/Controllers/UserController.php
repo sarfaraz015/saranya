@@ -173,12 +173,26 @@ public function generate_token() {
 
 function blockUserMessage()
 {
+    $response = [];
+    $errorCode = '';
     $receivedData = session()->getFlashdata();
     $email = $receivedData['email'];
-    $response['message'] = "Email-Id ".$email." has been temporarily blocked";
-    $response['response'] = false;
-    $errorCode = 401;
-    return $this->response->setJSON($response)->setStatusCode($errorCode); 
+    $status = $this->userlibrary->checkTemperorlyBlockedUserAndActivate($email);
+    
+   if(!$status)
+   {
+        $response['message'] = "Email-Id ".$email." has been temporarily blocked";
+        $response['response'] = false;
+        $errorCode = 401; 
+   }
+   else
+   {
+        $response['message'] = "Your Email-ID is activated please go to login page and login again";
+        $response['response'] = true;
+        $errorCode = 200; 
+   }
+ 
+   return $this->response->setJSON($response)->setStatusCode($errorCode);
 }
 
 
@@ -205,8 +219,6 @@ public function login()
         $json_data = $this->request->getJSON();
         $email = trim($json_data->email);
         $password = trim($json_data->password);
-
-       
 
         if($this->userlibrary->checkUserAlreadyExists($email))
         {
@@ -611,6 +623,7 @@ public function get_user_data()
             {
                 return redirect()->route('logout');
             }
+            $this->userlibrary->storeLogs(debug_backtrace(),$result,$token);
             $decryptedUserData = $this->decryptDataRow($result);
             $response['message']= "User details";
             $response['data']= $decryptedUserData;
@@ -656,7 +669,7 @@ public function testcode()
 
 
 
-function generate_tester_token()
+public function generate_tester_token()
 {
     if ($this->request->getMethod() === 'post') 
     {
@@ -692,6 +705,25 @@ function generate_tester_token()
     }
 	
 }
+
+
+public function contactLog(){
+    $userLogs = $this->userlibrary->storeLogs(debug_backtrace());
+    print_r($userLogs);die;
+}
+
+public function aboutLog(){
+    $userLogs = $this->userlibrary->storeLogs(debug_backtrace());
+    print_r($userLogs);die;
+}
+
+
+public function settingLog(){
+    $userLogs = $this->userlibrary->storeLogs(debug_backtrace());
+    print_r($userLogs);die;
+}
+
+
 
 
 

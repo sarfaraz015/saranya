@@ -197,4 +197,28 @@ public function checkOTPTimeout($user_id,$otp)
 }
 
 
+public function getLastAttemptRecord($email)
+{
+        $q = "SELECT * FROM login_attempts WHERE `login` = '{$email}' ORDER BY id DESC";
+	$result = $this->db->query($q)
+		  ->getResult();
+        $row = $result[0];  
+        return $row;   
+}
+
+public function storeUserLogHistory($data)
+{
+        $this->db->table('users_log_history')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;     
+}
+
+
+public function getUserIdFromUsersToken($token)
+{
+        
+}
+
+
 }
