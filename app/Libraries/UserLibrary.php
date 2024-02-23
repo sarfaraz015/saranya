@@ -196,7 +196,7 @@ public function checkTemperorlyBlockedUserAndActivate($email)
 }
 
 
-public function storeLogs($fun,$userdata,$token)
+public function storeLogs($fun,$uid=null,$token=null)
 {
     $logResult = [];
     $logResult['called_class'] = $fun[0]['class'];
@@ -211,16 +211,35 @@ public function storeLogs($fun,$userdata,$token)
 	date_default_timezone_set('Asia/Kolkata');
 	$currentDateTime = date("Y:m:d H:i:s");
 	$logResult['hit_date_time'] = $currentDateTime;
-	$logResult['uid'] = $userdata->uid;
-
 	$arr['access_key'] = "67hthyd777==ljdsbsdjf";
 	$arr['screte_key'] = "fvdshchsjcasjdhadjhsadkask";
-	$arr['token'] = $token;
+
+	$row = '';
+    if($uid!=null)
+	{
+		$row = $this->usermodel->getToken($uid);
+	}
+	else
+	{
+		if($this->usermodel->verifyToken($token))
+		{
+			$row = $this->usermodel->getUidFromUsersTokens($token);
+		}
+		else
+		{
+			return; 
+		}
+	  	
+	}
+	$arr['token'] = $row==''?$row:$row->token;
+	$logResult['uid'] = $uid!=null?$uid:$row->uid;
 	$logResult['user_input_data'] = json_encode($arr);
 
 	$this->usermodel->storeUserLogHistory($logResult);
     return $logResult;
 }
+
+
 
 
 

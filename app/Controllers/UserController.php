@@ -260,6 +260,7 @@ public function login()
                         date_default_timezone_set('Asia/Kolkata');
                         $currentDate = date("Y:m:d H:i:s");
                         $this->usermodel->updateLastLoginInUsers($userId);
+                        $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
                         $response['message']= "Welcome back ".$email;
                         $response['token']= $this->generate_token();
                         $response['response'] = true;
@@ -282,6 +283,7 @@ public function login()
                 }
                     $user_details = $this->usermodel->getUserDetails($userId);
                     $this->usermodel->updateLastLoginInUsers($userId);
+                    $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
 					$response['user']= "Welcome - : ".$this->dataHandler->retrieveAndDecrypt($user_details->email);
 					$response['message']="User logged in successfully";
 					$response['token']= $this->generate_token();
@@ -489,6 +491,7 @@ public function logout()
 			'login_active_status'=>0,
             'updated_at'=>$currentDate
 		);
+        $this->userlibrary->storeLogs(debug_backtrace(),$userId=null,$token->getValue());
 		if($this->usermodel->destroyToken($token->getValue(),$data)==1){
 			$response['message']= "Logout succesfully";
 			$response['response'] = true;
@@ -623,7 +626,7 @@ public function get_user_data()
             {
                 return redirect()->route('logout');
             }
-            $this->userlibrary->storeLogs(debug_backtrace(),$result,$token);
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token);
             $decryptedUserData = $this->decryptDataRow($result);
             $response['message']= "User details";
             $response['data']= $decryptedUserData;
@@ -724,6 +727,27 @@ public function settingLog(){
 }
 
 
+
+public function tom($par1=null,$par2=null)
+{
+    //  print_r("calling tom");die;
+    echo $par1 ." / ". $par2;die;
+}
+
+public function testingCode()
+{
+    //  echo 'testingCode';die;
+    $param1 = "H";
+    $param2 = "M";
+    // $this->tom($param1,$param2);
+    $this->tom($param1);
+
+}
+
+public function testBlockTime()
+{
+    // echo 'testBlockTime';die;
+}
 
 
 

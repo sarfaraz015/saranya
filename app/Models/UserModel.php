@@ -215,10 +215,21 @@ public function storeUserLogHistory($data)
 }
 
 
-public function getUserIdFromUsersToken($token)
+public function getToken($user_id)
 {
-        
+        $q = "SELECT * FROM users_tokens WHERE `uid`='{$user_id}'";
+        $query = $this->db->query($q); 
+        return $query->getRow();
 }
+
+
+public function getUidFromUsersTokens($token)
+{
+        $q = "SELECT * FROM users_tokens WHERE `token`='{$token}'";
+        $query = $this->db->query($q); 
+        return $query->getRow();
+}
+
 
 
 }

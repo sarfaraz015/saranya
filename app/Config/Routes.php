@@ -40,3 +40,7 @@ $routes->get('/storeLogs', 'UserController::storeLogs');
 $routes->get('/contactLog', 'UserController::contactLog');
 $routes->get('/aboutLog', 'UserController::aboutLog');
 $routes->get('/settingLog', 'UserController::settingLog');
+
+$routes->get('/testingCode', 'UserController::testingCode');
+
+$routes->get('/testBlockTime', 'UserController::testBlockTime');
