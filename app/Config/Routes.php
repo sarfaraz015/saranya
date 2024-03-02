@@ -2,6 +2,7 @@
 
 use CodeIgniter\Router\RouteCollection;
 use App\Controllers\UserController;
+use App\Controllers\TestController;
 
 /**
  * @var RouteCollection $routes
@@ -43,4 +44,9 @@ $routes->get('/settingLog', 'UserController::settingLog');
 
 $routes->get('/testingCode', 'UserController::testingCode');
 
-$routes->get('/testBlockTime', 'UserController::testBlockTime');
+$routes->get('/testapi', 'UserController::testapi');
+
+// $routes->post('/datetime', 'UserController::datetime');
+
+
+$routes->post('/datetime', 'TestController::datetime');
