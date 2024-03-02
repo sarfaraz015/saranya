@@ -751,4 +751,76 @@ public function testBlockTime()
 
 
 
+public function chekApiHitTimings()
+{
+//    echo 'chekApiHitTimings';die;
+
+    $currentURL = current_url();
+
+    $apiURL = preg_replace('/\/index.php/','', $currentURL);
+    $ip_address = $_SERVER['REMOTE_ADDR'];
+	$user_agent = $_SERVER['HTTP_USER_AGENT'];
+    // $user_id = $this->request->getHeader('userid')->getValue();
+    $user_id = 16;
+
+    date_default_timezone_set('Asia/Kolkata');
+    $current_hit = date("Y:m:d H:i:s");
+
+    $api_logs = $this->usermodel->getApiLogs($user_id);
+
+    $last_hit = isset($api_logs->current_hit)?$api_logs->current_hit:null;
+
+    // print_r($last_hit);
+
+    $data = array(
+        'user_id'=>$user_id,
+        'ip_address'=>$ip_address,
+        'api_url'=>$apiURL,
+        'user_agent'=>$user_agent,
+        'last_hit'=>$last_hit,
+        'current_hit'=>$current_hit,
+        'hit_count'=>0
+    );
+
+     // echo "Lasthit : ".$last_hit." / Currenthit : ".$current_hit;
+      
+     $hit_count = isset($api_logs->hit_count)?$api_logs->hit_count:0;
+
+    if(strtotime($last_hit) == strtotime($current_hit))
+    {
+        $data['hit_count'] = $hit_count+1;
+        // print_r($data);die;
+        $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+    }
+    else
+    {
+        if($this->usermodel->checkUserIdAndApiURL($user_id,$apiURL))
+        {
+               $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+        }
+        else
+        {
+               $this->usermodel->insertApiLogs($data);
+        }
+    }
+
+   
+
+    
+    
+     die;
+
+}
+
+public function testapi()
+{
+    // echo 'testBlockTime';die;
+    
+    // echo $user_id;die;
+    $this->chekApiHitTimings();
+}
+
+
+
+
 }
