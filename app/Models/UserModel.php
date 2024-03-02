@@ -231,5 +231,59 @@ public function getUidFromUsersTokens($token)
 }
 
 
+public function checkUserIdIsAvailableInApiLogsTable($user_id)
+{
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}'";
+        $query = $this->db->query($q); 
+        // print_r($query->getRow());
+        return $query->getRow(); 
+}
+
+public function checkUserIdAndApiURL($user_id,$url)
+{
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$url}'";
+        $query = $this->db->query($q); 
+        // print_r($query->getRow());
+        return $query->getRow(); 
+}
+
+public function getApiLogs($user_id)
+{
+
+        // if($this->checkUserIdIsAvailableInApiLogsTable($user_id))
+        // {
+                $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' ORDER BY id DESC";
+                $query = $this->db->query($q);
+                return $query->getRow(); 
+        // }
+        // else
+        // {
+                // $this->db->table('api_logs')
+                //         ->insert($data);
+                //         $insertedID = $this->db->insertID();
+                //         die; 
+                //         return $insertedID;  
+
+        // }
+          
+}
+
+public function insertApiLogs($data)
+{
+              $this->db->table('api_logs')
+                        ->insert($data);
+                        $insertedID = $this->db->insertID();
+                        // die; 
+                        return $insertedID;  
+}
+
+
+public function updateApiLogs($user_id,$apiUrl,$data)
+{
+        $this->db->table('api_logs')
+        ->where('user_id',$user_id)
+        ->where('api_url',$apiUrl)
+        ->update($data);
+}
 
 }
