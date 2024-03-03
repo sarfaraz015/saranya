@@ -21,7 +21,7 @@ class UserController extends BaseController
 
     public function __construct()
     {
-           $testlib = new Lib_log();
+        //    $testlib = new Lib_log();
            $secret_key = $_ENV['ENCRYPTION_KEY'];
            $salt = $_ENV['SALT'];
            $this->usermodel = new UserModel();
@@ -753,8 +753,6 @@ public function testBlockTime()
 
 public function chekApiHitTimings()
 {
-//    echo 'chekApiHitTimings';die;
-
     $currentURL = current_url();
 
     $apiURL = preg_replace('/\/index.php/','', $currentURL);
@@ -766,11 +764,9 @@ public function chekApiHitTimings()
     date_default_timezone_set('Asia/Kolkata');
     $current_hit = date("Y:m:d H:i:s");
 
-    $api_logs = $this->usermodel->getApiLogs($user_id);
+    $api_logs = $this->usermodel->getApiLogs($user_id,$apiURL);
 
     $last_hit = isset($api_logs->current_hit)?$api_logs->current_hit:null;
-
-    // print_r($last_hit);
 
     $data = array(
         'user_id'=>$user_id,
@@ -784,31 +780,50 @@ public function chekApiHitTimings()
 
      // echo "Lasthit : ".$last_hit." / Currenthit : ".$current_hit;
       
-     $hit_count = isset($api_logs->hit_count)?$api_logs->hit_count:0;
+    $hit_count = isset($api_logs->hit_count)?$api_logs->hit_count:0;
 
-    if(strtotime($last_hit) == strtotime($current_hit))
+    if($hit_count < 3)
     {
-        $data['hit_count'] = $hit_count+1;
-        // print_r($data);die;
-        $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+            if(strtotime($last_hit) == strtotime($current_hit))
+            {
+                $data['hit_count'] = $hit_count+1;
+                $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+            }
+            else
+            {
+                if($this->usermodel->checkUserIdAndApiURL($user_id,$apiURL))
+                {
+                    $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+                }
+                else
+                {
+                    $this->usermodel->insertApiLogs($data);
+                }
+            }
     }
     else
     {
-        if($this->usermodel->checkUserIdAndApiURL($user_id,$apiURL))
+        $userHitData = $this->usermodel->timeCheckerToReleaseUser($user_id,$apiURL);
+
+        date_default_timezone_set('Asia/Kolkata');
+        $currentDateTime = date("Y:m:d H:i:s");
+        
+        $currentHitFromDB = $userHitData->current_hit;
+    
+        $timeOfReleaseEpoc = strtotime("+1 minutes", strtotime($currentHitFromDB));
+        $timeOfRelease =  date('Y:m:d H:i:s', $timeOfReleaseEpoc);
+
+        if(strtotime($currentDateTime) > strtotime($timeOfRelease))
         {
-               $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+            $data['hit_count'] = 0;
+            $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
+            echo "User is released";
         }
         else
         {
-               $this->usermodel->insertApiLogs($data);
+            echo "User has been blocked for 1 minute due to continues hit";
         }
-    }
-
-   
-
-    
-    
-     die;
+    } 
 
 }
 

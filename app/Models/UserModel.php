@@ -235,7 +235,6 @@ public function checkUserIdIsAvailableInApiLogsTable($user_id)
 {
         $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}'";
         $query = $this->db->query($q); 
-        // print_r($query->getRow());
         return $query->getRow(); 
 }
 
@@ -243,38 +242,22 @@ public function checkUserIdAndApiURL($user_id,$url)
 {
         $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$url}'";
         $query = $this->db->query($q); 
-        // print_r($query->getRow());
         return $query->getRow(); 
 }
 
-public function getApiLogs($user_id)
+public function getApiLogs($user_id,$apiURL)
 {
-
-        // if($this->checkUserIdIsAvailableInApiLogsTable($user_id))
-        // {
-                $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' ORDER BY id DESC";
-                $query = $this->db->query($q);
-                return $query->getRow(); 
-        // }
-        // else
-        // {
-                // $this->db->table('api_logs')
-                //         ->insert($data);
-                //         $insertedID = $this->db->insertID();
-                //         die; 
-                //         return $insertedID;  
-
-        // }
-          
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $query = $this->db->query($q);
+        return $query->getRow();          
 }
 
 public function insertApiLogs($data)
 {
-              $this->db->table('api_logs')
-                        ->insert($data);
-                        $insertedID = $this->db->insertID();
-                        // die; 
-                        return $insertedID;  
+        $this->db->table('api_logs')
+                ->insert($data);
+                $insertedID = $this->db->insertID();
+                return $insertedID;  
 }
 
 
@@ -285,5 +268,28 @@ public function updateApiLogs($user_id,$apiUrl,$data)
         ->where('api_url',$apiUrl)
         ->update($data);
 }
+
+
+public function timeCheckerToReleaseUser($user_id,$apiURL)
+{
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $query = $this->db->query($q);
+        return $query->getRow();  
+}
+
+
+
+// Function not in use : 
+public function checkUsersMaxApiHitCount($user_id,$apiURL)
+{
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $query = $this->db->query($q);
+        return $query->getRow(); 
+}
+
+
+
+
+
 
 }
