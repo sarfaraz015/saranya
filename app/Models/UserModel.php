@@ -288,6 +288,14 @@ public function checkUsersMaxApiHitCount($user_id,$apiURL)
 }
 
 
+public function checkAnyApiHasMaxCountForUser($user_id)
+{
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `hit_count`>2";
+        $query = $this->db->query($q);
+        // print_r($query->getRow());die;
+        return $query->getRow(); 
+}
+
 
 
 

@@ -9,6 +9,7 @@ use App\Libraries\UserLibrary;
 use App\Libraries\SecureDataHandler;
 use Config\Tester;
 use App\Libraries\Lib_log;
+// use CodeIgniter\HTTP\Client;
 
 class UserController extends BaseController
 {
@@ -660,16 +661,11 @@ public function get_user_data()
 
 }
 
-
-
 public function testcode()
 {
-    // echo "calling testcode";die;
     echo $this->dataHandler->retrieveAndDecrypt('blE6TiTGYJ241aPpWaMLzsAhw9u0fcUOi3i0gJxX0CU=');
     die;
 }
-
-
 
 
 public function generate_tester_token()
@@ -694,7 +690,6 @@ public function generate_tester_token()
             return $this->response->setJSON($response)->setStatusCode($errorCode);
         }
 
-        // echo "proccedd valid";die;
         $json_data = $this->request->getJSON();
         $length = trim($json_data->password_length);
         $alphabets = trim($json_data->alphabets);
@@ -703,7 +698,6 @@ public function generate_tester_token()
 
 
         $tester_token = $this->userlibrary->getTesterToken($length,$numbers,$alphabets,$symbols);
-        print_r($tester_token);die;
         return $this->response->setJSON($response)->setStatusCode($errorCode);
     }
 	
@@ -753,6 +747,8 @@ public function testBlockTime()
 
 public function chekApiHitTimings()
 {
+    $response = [];
+    $errorCode = 200;
     $currentURL = current_url();
 
     $apiURL = preg_replace('/\/index.php/','', $currentURL);
@@ -760,7 +756,7 @@ public function chekApiHitTimings()
 	$user_agent = $_SERVER['HTTP_USER_AGENT'];
     // $user_id = $this->request->getHeader('userid')->getValue();
     $user_id = 16;
-
+    
     date_default_timezone_set('Asia/Kolkata');
     $current_hit = date("Y:m:d H:i:s");
 
@@ -800,6 +796,10 @@ public function chekApiHitTimings()
                     $this->usermodel->insertApiLogs($data);
                 }
             }
+            $errorCode = 200;
+            $response['response'] = true;
+            $response['code'] = 200;
+            $response['message'] = "Api hit count is less than 3";
     }
     else
     {
@@ -817,23 +817,70 @@ public function chekApiHitTimings()
         {
             $data['hit_count'] = 0;
             $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
-            echo "User is released";
+            $errorCode = 200;
+            $response['response'] = true;
+            $response['code'] = 200;
+            $response['message'] = "User is released";
         }
         else
         {
-            echo "User has been blocked for 1 minute due to continues hit";
+            $errorCode = 400;
+            $response['response'] = false;
+            $response['code'] = 400;
+            $response['message'] = "User has been blocked for 1 minute due to continues reloading of the page";
         }
-    } 
+    }
+    
+    $overall_hit_count = isset($this->usermodel->checkAnyApiHasMaxCountForUser($user_id)->hit_count)?$this->usermodel->checkAnyApiHasMaxCountForUser($user_id)->hit_count:0;
+    if($overall_hit_count >=3)
+    {
+        $errorCode = 400;
+        $response['response'] = false;
+        $response['code'] = 400;
+        $response['message'] = "User has been blocked for 1 minute due to continues reloading of the page...";
+    }
+    
+    return $response;
 
 }
 
 public function testapi()
-{
-    // echo 'testBlockTime';die;
-    
-    // echo $user_id;die;
-    $this->chekApiHitTimings();
+{ 
+    if($this->chekApiHitTimings()['response'])
+    {
+        return $this->response->setJSON(["message"=>"Test API page"])->setStatusCode(200);
+    }
+    else
+    {
+        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+    }
 }
+
+public function about()
+{    
+    if($this->chekApiHitTimings()['response'])
+    {
+        return $this->response->setJSON(["message"=>"About page"])->setStatusCode(200);
+    }
+    else
+    {
+        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+    }
+}
+
+public function contact()
+{ 
+    if($this->chekApiHitTimings()['response'])
+    {
+        return $this->response->setJSON(["message"=>"Contact page"])->setStatusCode(200); 
+    }
+    else
+    {
+        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+    } 
+}
+
+
 
 
 

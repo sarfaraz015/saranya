@@ -50,3 +50,9 @@ $routes->get('/testapi', 'UserController::testapi');
 
 
 $routes->post('/datetime', 'TestController::datetime');
+
+$routes->get('/dashboard', 'UserController::dashboard');
+$routes->get('/about', 'UserController::about');
+$routes->get('/contact', 'UserController::contact');
+
+$routes->get('/chekApiHitTimings', 'UserController::chekApiHitTimings');
