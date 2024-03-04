@@ -272,9 +272,16 @@ public function updateApiLogs($user_id,$apiUrl,$data)
 
 public function timeCheckerToReleaseUser($user_id,$apiURL)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `hit_count`>=3";
         $query = $this->db->query($q);
         return $query->getRow();  
+}
+
+public function releaseUserApis($user_id,$data)
+{
+        $this->db->table('api_logs')
+        ->where('user_id',$user_id)
+        ->update($data);  
 }
 
 
@@ -292,7 +299,6 @@ public function checkAnyApiHasMaxCountForUser($user_id)
 {
         $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `hit_count`>2";
         $query = $this->db->query($q);
-        // print_r($query->getRow());die;
         return $query->getRow(); 
 }
 

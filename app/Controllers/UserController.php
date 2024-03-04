@@ -423,7 +423,7 @@ public function resetPassword($user_id,$newPassword,$otp)
 
 public function reset_password()
 {
-    if ($this->request->getMethod() === 'post') 
+    if($this->request->getMethod() === 'post') 
     {
         $response = [];
         $errorCode = '';
@@ -745,138 +745,44 @@ public function testBlockTime()
 
 
 
-public function chekApiHitTimings()
-{
-    $response = [];
-    $errorCode = 200;
-    $currentURL = current_url();
 
-    $apiURL = preg_replace('/\/index.php/','', $currentURL);
-    $ip_address = $_SERVER['REMOTE_ADDR'];
-	$user_agent = $_SERVER['HTTP_USER_AGENT'];
-    // $user_id = $this->request->getHeader('userid')->getValue();
-    $user_id = 16;
-    
-    date_default_timezone_set('Asia/Kolkata');
-    $current_hit = date("Y:m:d H:i:s");
-
-    $api_logs = $this->usermodel->getApiLogs($user_id,$apiURL);
-
-    $last_hit = isset($api_logs->current_hit)?$api_logs->current_hit:null;
-
-    $data = array(
-        'user_id'=>$user_id,
-        'ip_address'=>$ip_address,
-        'api_url'=>$apiURL,
-        'user_agent'=>$user_agent,
-        'last_hit'=>$last_hit,
-        'current_hit'=>$current_hit,
-        'hit_count'=>0
-    );
-
-     // echo "Lasthit : ".$last_hit." / Currenthit : ".$current_hit;
-      
-    $hit_count = isset($api_logs->hit_count)?$api_logs->hit_count:0;
-
-    if($hit_count < 3)
-    {
-            if(strtotime($last_hit) == strtotime($current_hit))
-            {
-                $data['hit_count'] = $hit_count+1;
-                $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
-            }
-            else
-            {
-                if($this->usermodel->checkUserIdAndApiURL($user_id,$apiURL))
-                {
-                    $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
-                }
-                else
-                {
-                    $this->usermodel->insertApiLogs($data);
-                }
-            }
-            $errorCode = 200;
-            $response['response'] = true;
-            $response['code'] = 200;
-            $response['message'] = "Api hit count is less than 3";
-    }
-    else
-    {
-        $userHitData = $this->usermodel->timeCheckerToReleaseUser($user_id,$apiURL);
-
-        date_default_timezone_set('Asia/Kolkata');
-        $currentDateTime = date("Y:m:d H:i:s");
-        
-        $currentHitFromDB = $userHitData->current_hit;
-    
-        $timeOfReleaseEpoc = strtotime("+1 minutes", strtotime($currentHitFromDB));
-        $timeOfRelease =  date('Y:m:d H:i:s', $timeOfReleaseEpoc);
-
-        if(strtotime($currentDateTime) > strtotime($timeOfRelease))
-        {
-            $data['hit_count'] = 0;
-            $this->usermodel->updateApiLogs($user_id,$apiURL,$data);
-            $errorCode = 200;
-            $response['response'] = true;
-            $response['code'] = 200;
-            $response['message'] = "User is released";
-        }
-        else
-        {
-            $errorCode = 400;
-            $response['response'] = false;
-            $response['code'] = 400;
-            $response['message'] = "User has been blocked for 1 minute due to continues reloading of the page";
-        }
-    }
-    
-    $overall_hit_count = isset($this->usermodel->checkAnyApiHasMaxCountForUser($user_id)->hit_count)?$this->usermodel->checkAnyApiHasMaxCountForUser($user_id)->hit_count:0;
-    if($overall_hit_count >=3)
-    {
-        $errorCode = 400;
-        $response['response'] = false;
-        $response['code'] = 400;
-        $response['message'] = "User has been blocked for 1 minute due to continues reloading of the page...";
-    }
-    
-    return $response;
-
-}
 
 public function testapi()
 { 
-    if($this->chekApiHitTimings()['response'])
+    $user_id = 16;
+    if($this->userlibrary->chekApiHitTimings($user_id)['response'])
     {
         return $this->response->setJSON(["message"=>"Test API page"])->setStatusCode(200);
     }
     else
     {
-        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+        return $this->response->setJSON($this->userlibrary->chekApiHitTimings($user_id))->setStatusCode($this->userlibrary->chekApiHitTimings($user_id)['code']);
     }
 }
 
 public function about()
 {    
-    if($this->chekApiHitTimings()['response'])
+    $user_id = 16;
+    if($this->userlibrary->chekApiHitTimings($user_id)['response'])
     {
         return $this->response->setJSON(["message"=>"About page"])->setStatusCode(200);
     }
     else
     {
-        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+        return $this->response->setJSON($this->userlibrary->chekApiHitTimings($user_id))->setStatusCode($this->userlibrary->chekApiHitTimings($user_id)['code']);
     }
 }
 
 public function contact()
 { 
-    if($this->chekApiHitTimings()['response'])
+    $user_id = 16;
+    if($this->userlibrary->chekApiHitTimings($user_id)['response'])
     {
         return $this->response->setJSON(["message"=>"Contact page"])->setStatusCode(200); 
     }
     else
     {
-        return $this->response->setJSON($this->chekApiHitTimings())->setStatusCode($this->chekApiHitTimings()['code']);
+        return $this->response->setJSON($this->userlibrary->chekApiHitTimings($user_id))->setStatusCode($this->userlibrary->chekApiHitTimings($user_id)['code']);
     } 
 }
 
