@@ -22,7 +22,7 @@ class UserController extends BaseController
 
     public function __construct()
     {
-        //    $testlib = new Lib_log();
+           $testlib = new Lib_log();
            $secret_key = $_ENV['ENCRYPTION_KEY'];
            $salt = $_ENV['SALT'];
            $this->usermodel = new UserModel();
@@ -37,7 +37,7 @@ class UserController extends BaseController
 
     public function test()
     {
-         echo "Calling test from UserController";
+        return $this->response->setJSON(["message"=>"Calling Test api from Usercontroller"])->setStatusCode(200);
     }
 
 public function generateUserId()
@@ -696,8 +696,11 @@ public function generate_tester_token()
         $numbers = trim($json_data->numbers);
         $symbols = trim($json_data->symbols);
 
-
         $tester_token = $this->userlibrary->getTesterToken($length,$numbers,$alphabets,$symbols);
+        $errorCode = 200;
+        $response['message'] = "Tester token created successfully";
+        $response['response'] = true;
+        $response['tester_token'] = $tester_token;
         return $this->response->setJSON($response)->setStatusCode($errorCode);
     }
 	
