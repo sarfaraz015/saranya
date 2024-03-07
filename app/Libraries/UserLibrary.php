@@ -236,8 +236,8 @@ public function storeLogs($fun,$uid=null,$token=null,$request=null,$response=nul
 	$logResult['user_input_data'] = json_encode($request);
     $logResult['user_response_data'] = json_encode($response);
 
-    $requestSize =  $logResult['user_input_data']!=''?(strlen($logResult['user_input_data'])/1024)."KB":(0)." KB";
-    $responseSize = $logResult['user_response_data']!=''?(strlen($logResult['user_response_data'])/1024)."KB":(0)." KB";
+    $requestSize =  $logResult['user_input_data']!=''?strlen($logResult['user_input_data'])."Bytes":(0)." Bytes";
+    $responseSize = $logResult['user_response_data']!=''?strlen($logResult['user_response_data'])."Bytes":(0)." Bytes";
 
     $logResult['request_size'] = $requestSize;
     $logResult['response_size'] = $responseSize;
