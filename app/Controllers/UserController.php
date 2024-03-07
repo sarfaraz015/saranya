@@ -261,7 +261,7 @@ public function login()
                         date_default_timezone_set('Asia/Kolkata');
                         $currentDate = date("Y:m:d H:i:s");
                         $this->usermodel->updateLastLoginInUsers($userId);
-                        $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
+                        // $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
                         $response['message']= "Welcome back ".$email;
                         $response['token']= $this->generate_token();
                         $response['response'] = true;
@@ -271,6 +271,7 @@ public function login()
                             'updated_at'=>$currentDate,
                             'hit_time'=>$currentDate
                         );
+                        $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
                         $updated_id = $this->usermodel->updateToken($token_data,$userId);
                         $errorCode = 200;
                     }
@@ -284,7 +285,7 @@ public function login()
                 }
                     $user_details = $this->usermodel->getUserDetails($userId);
                     $this->usermodel->updateLastLoginInUsers($userId);
-                    $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
+                    // $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
 					$response['user']= "Welcome - : ".$this->dataHandler->retrieveAndDecrypt($user_details->email);
 					$response['message']="User logged in successfully";
 					$response['token']= $this->generate_token();
@@ -300,7 +301,7 @@ public function login()
                         'created_at'=>$currentDate,
                         'hit_time'=>$currentDate,
 					);
-
+                    $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
 					$inserted_id = $this->usermodel->insertToken($token_data);
 					$errorCode = 200;
             }
@@ -492,7 +493,7 @@ public function logout()
 			'login_active_status'=>0,
             'updated_at'=>$currentDate
 		);
-        $this->userlibrary->storeLogs(debug_backtrace(),$userId=null,$token->getValue());
+        $this->userlibrary->storeLogs(debug_backtrace(),$userId=null,$token->getValue(),null,$response);
 		if($this->usermodel->destroyToken($token->getValue(),$data)==1){
 			$response['message']= "Logout succesfully";
 			$response['response'] = true;
@@ -627,12 +628,13 @@ public function get_user_data()
             {
                 return redirect()->route('logout');
             }
-            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token);
+            // $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
             $decryptedUserData = $this->decryptDataRow($result);
             $response['message']= "User details";
             $response['data']= $decryptedUserData;
             $response['response']=true;
             $errorCode = 200;
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
         else
         {
@@ -788,7 +790,6 @@ public function contact()
         return $this->response->setJSON($this->userlibrary->chekApiHitTimings($user_id))->setStatusCode($this->userlibrary->chekApiHitTimings($user_id)['code']);
     } 
 }
-
 
 
 

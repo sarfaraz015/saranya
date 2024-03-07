@@ -50,8 +50,23 @@ class CreateUsersLogHistoryTable extends Migration
                 'constraint' => 500,
                 'null' => true,
             ],
+            'user_response_data' => [
+                'type' => 'TEXT',
+                'constraint' => 500,
+                'null' => true,
+            ],
             'hit_date_time' => [
                 'type' => 'TIMESTAMP',
+                'null' => true,
+            ],
+            'request_size' => [
+                'type' => 'TEXT',
+                'constraint' => 500,
+                'null' => true,
+            ],
+            'response_size' => [
+                'type' => 'TEXT',
+                'constraint' => 500,
                 'null' => true,
             ],
         ]);

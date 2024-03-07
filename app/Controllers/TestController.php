@@ -5,9 +5,15 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
+// use CodeIgniter\Files\File;
 
 class TestController extends BaseController
 {
+
+    public function __construct(){
+        helper("filesystem");
+    }
+
     public function datetime()
     {
         //    echo 'datetime';die;
@@ -52,4 +58,154 @@ class TestController extends BaseController
 
         // die;
     }
+
+
+   public function test_files()
+   {
+       
+
+        $filePath = APPPATH.'.htaccess'; //working
+        // $filePath = APPPATH.'..\composer.json';  //working
+        // $filePath = APPPATH.'..\.env';  //working
+
+        // echo $filePath;die;
+
+        if (file_exists($filePath)) {
+            echo 'The file exists.';
+        } else {
+            echo 'The file does not exist.';
+        }
+
+    die;
+   }
+
+
+  public function set_folder_permission_for_windows()
+  {
+   
+    $folderPath = APPPATH.'MyChapters'; // Replace with your actual folder path
+
+// Set read-only permissions using icacls command
+    $command = "icacls \"$folderPath\" /inheritance:r /grant:r everyone:(OI)(CI)R";
+
+    $output = null;
+    $returnCode = null;
+    exec($command, $output, $returnCode);
+
+    if ($returnCode === 0) {
+        echo 'Folder permissions set to read-only successfully.';
+    } else {
+        echo 'Failed to set folder permissions.';
+
+        // Output additional information for debugging if needed
+        echo '<pre>';
+        print_r($output);
+        echo '</pre>';
+    }
+
+die;
+
+  }
+
+
+
+public function grant_write_permission_to_folder_for_windows()
+{
+    // $folderPath = 'C:\\path\\to\\your\\folder'; // Replace with your actual folder path
+    $folderPath = APPPATH.'MyPic';
+
+    // Set write permissions using icacls command
+    $command = "icacls \"$folderPath\" /inheritance:r /grant:r everyone:(OI)(CI)W";
+    
+    $output = null;
+    $returnCode = null;
+    exec($command, $output, $returnCode);
+    
+    if ($returnCode === 0) {
+        echo 'Folder permissions set to write successfully.';
+    } else {
+        echo 'Failed to set folder permissions.';
+    
+        // Output additional information for debugging if needed
+        echo '<pre>';
+        print_r($output);
+        echo '</pre>';
+    }
+
+    die;
+}
+
+
+
+public function read_write()
+{
+     $data = 'Some file data one file';
+     // $filePath = APPPATH.'MyImg/fifth.txt';
+     $filePath = APPPATH.'MyChapters/two.txt';
+
+         if (!write_file($filePath, $data)) {
+             echo 'Unable to write the file';
+         } else {
+             echo 'File written!';
+         }
+
+  die;
+
+}
+
+
+public function set_folder_permission_php()
+{
+ 
+  $folderPath = APPPATH.'MyChapters'; 
+
+//   $permissions = 0644; 
+
+//   if (chmod($folderPath, $permissions)) {
+//     //   mkdir($folderPath);
+//     mkdir($folderPath, $permissions);
+//       echo 'Folder permissions set to read-only successfully.';
+//   } else {
+//       echo 'Failed to set folder permissions.';
+//   }
+
+if (!file_exists($folderPath) ) {
+    mkdir($folderPath);
+
+    if (chmod($folderPath, 0444)) {
+        echo 'Folder permissions set to 0444 successfully.';
+    } else {
+        echo 'Failed to set folder permissions.';
+    }
+}
+
+
+
+
+die;
+
+}
+
+
+
+public function grant_write_permission_to_folder_php()
+{
+//    echo 'grant_write_permission_to_folder_php';die;
+
+        $folderPath = APPPATH.'MyChapters';
+        // $folderPath = 'path/to/your/folder'; // Replace with your actual folder path
+        $permissions = 0777; // Read-only permissions for owner, group, and others
+        // echo $folderPath;die;
+        // Set folder permissions
+        if (chmod($folderPath, $permissions)) {
+            echo 'Folder permissions set to read-only successfully.';
+        } else {
+            echo 'Failed to set folder permissions.';
+        }
+
+      die;
+}
+
+
+
 }

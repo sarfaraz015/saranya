@@ -196,7 +196,7 @@ public function checkTemperorlyBlockedUserAndActivate($email)
 }
 
 
-public function storeLogs($fun,$uid=null,$token=null)
+public function storeLogs($fun,$uid=null,$token=null,$request=null,$response=null)
 {
     $logResult = [];
     $logResult['called_class'] = $fun[0]['class'];
@@ -211,8 +211,8 @@ public function storeLogs($fun,$uid=null,$token=null)
 	date_default_timezone_set('Asia/Kolkata');
 	$currentDateTime = date("Y:m:d H:i:s");
 	$logResult['hit_date_time'] = $currentDateTime;
-	$arr['access_key'] = "67hthyd777==ljdsbsdjf";
-	$arr['screte_key'] = "fvdshchsjcasjdhadjhsadkask";
+	// $arr['access_key'] = "67hthyd777==ljdsbsdjf";
+	// $arr['screte_key'] = "fvdshchsjcasjdhadjhsadkask";
 
 	$row = '';
     if($uid!=null)
@@ -233,8 +233,15 @@ public function storeLogs($fun,$uid=null,$token=null)
 	}
 	$arr['token'] = $row==''?$row:$row->token;
 	$logResult['uid'] = $uid!=null?$uid:$row->uid;
-	$logResult['user_input_data'] = json_encode($arr);
+	$logResult['user_input_data'] = json_encode($request);
+    $logResult['user_response_data'] = json_encode($response);
 
+    $requestSize =  $logResult['user_input_data']!=''?(strlen($logResult['user_input_data'])/1024)."KB":(0)." KB";
+    $responseSize = $logResult['user_response_data']!=''?(strlen($logResult['user_response_data'])/1024)."KB":(0)." KB";
+
+    $logResult['request_size'] = $requestSize;
+    $logResult['response_size'] = $responseSize;
+  
 	$this->usermodel->storeUserLogHistory($logResult);
     return $logResult;
 }

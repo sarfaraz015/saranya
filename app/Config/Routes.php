@@ -56,3 +56,17 @@ $routes->get('/about', 'UserController::about');
 $routes->get('/contact', 'UserController::contact');
 
 $routes->get('/chekApiHitTimings', 'UserController::chekApiHitTimings');
+
+
+$routes->get('/test_files', 'TestController::test_files');
+
+$routes->get('/read_write', 'TestController::read_write');
+
+$routes->get('/set_folder_permission_for_windows', 'TestController::set_folder_permission_for_windows');
+
+$routes->get('/grant_write_permission_to_folder', 'TestController::grant_write_permission_to_folder');
+
+
+$routes->get('/grant_write_permission_to_folder_php', 'TestController::grant_write_permission_to_folder_php');
+
+$routes->get('/set_folder_permission_php', 'TestController::set_folder_permission_php');
