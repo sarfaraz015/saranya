@@ -70,3 +70,10 @@ $routes->get('/grant_write_permission_to_folder', 'TestController::grant_write_p
 $routes->get('/grant_write_permission_to_folder_php', 'TestController::grant_write_permission_to_folder_php');
 
 $routes->get('/set_folder_permission_php', 'TestController::set_folder_permission_php');
+
+$routes->get('/set_permissions_for_file', 'TestController::set_permissions_for_file');
+
+$routes->get('/set_permissions_for_folder', 'TestController::set_permissions_for_folder');
+
+
+

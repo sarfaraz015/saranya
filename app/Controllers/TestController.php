@@ -141,7 +141,7 @@ public function read_write()
 {
      $data = 'Some file data one file';
      // $filePath = APPPATH.'MyImg/fifth.txt';
-     $filePath = APPPATH.'MyChapters/two.txt';
+     $filePath = APPPATH.'MyChapters2/one.txt';
 
          if (!write_file($filePath, $data)) {
              echo 'Unable to write the file';
@@ -157,7 +157,7 @@ public function read_write()
 public function set_folder_permission_php()
 {
  
-  $folderPath = APPPATH.'MyChapters'; 
+  $folderPath = APPPATH.'MyChapters2/one.txt'; 
 
 //   $permissions = 0644; 
 
@@ -169,17 +169,15 @@ public function set_folder_permission_php()
 //       echo 'Failed to set folder permissions.';
 //   }
 
-if (!file_exists($folderPath) ) {
-    mkdir($folderPath);
+// if (!file_exists($folderPath) ) {
+//     mkdir($folderPath);
 
-    if (chmod($folderPath, 0444)) {
-        echo 'Folder permissions set to 0444 successfully.';
-    } else {
-        echo 'Failed to set folder permissions.';
-    }
-}
-
-
+//     if (chmod($folderPath, 0444)) {
+//         echo 'Folder permissions set to 0444 successfully.';
+//     } else {
+//         echo 'Failed to set folder permissions.';
+//     }
+// }
 
 
 die;
@@ -205,6 +203,54 @@ public function grant_write_permission_to_folder_php()
 
       die;
 }
+
+
+public function set_permissions_for_file()
+{
+    // ############### set read permission (working code) ################
+
+    // $file = APPPATH.'MyChapters2/test'; 
+    // if (chmod($file, 0444)) {
+    //     echo 'Folder permissions set to 0444 successfully.';
+    // } else {
+    //     echo 'Failed to set folder permissions.';
+    // }
+
+    ################ write in file (working code)##############
+
+    // $data = 'Some file data one file';
+    // $filePath = APPPATH.'MyChapters2/three.txt';
+
+    //     if (!write_file($filePath, $data)) {
+    //         echo 'Unable to write the file';
+    //     } else {
+    //         echo 'File written!';
+    //     }
+
+
+//#############(working code) Set full permissions (read, write, execute) for owner, group, and others #####
+    $file = APPPATH.'MyChapters2/test'; 
+    if (chmod($file, 0777)) {
+        echo 'Folder permissions set to 0777 successfully.';
+    } else {
+        echo 'Failed to set folder permissions.';
+    }
+
+    die;
+
+}
+
+
+public function set_permissions_for_folder()
+{
+    $folderPath = APPPATH.'MyChapters2';
+
+    chmod($folderPath, 0444);    
+    echo "Folder permissions set to read-only for: $folderPath";
+    die;
+}
+
+
 
 
 

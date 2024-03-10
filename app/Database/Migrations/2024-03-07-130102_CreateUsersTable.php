@@ -117,7 +117,8 @@ class CreateUsersTable extends Migration
             ],
             'updated_on' => [
                 'type' => 'TIMESTAMP',
-                'default' => 'current_timestamp() ON UPDATE current_timestamp()',
+                'default' => $this->currentTimestamp(),
+                'on update CURRENT_TIMESTAMP' => true,
             ],
             'updated_by' => [
                 'type' => 'INT',
