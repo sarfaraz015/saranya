@@ -4,7 +4,7 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-class CreateUsersTable extends Migration
+class CreateTestingTable extends Migration
 {
     public function up()
     {
@@ -115,11 +115,6 @@ class CreateUsersTable extends Migration
                 'constraint' => 1,
                 'default' => 0,
             ],
-            // 'updated_on' => [
-            //     'type' => 'TIMESTAMP',
-            //     'default' => $this->currentTimestamp(),
-            //     'on update CURRENT_TIMESTAMP' => true,
-            // ],
             'updated_on' => [
                 'type' => 'TIMESTAMP',
                 'on update CURRENT_TIMESTAMP' => true,
@@ -148,17 +143,14 @@ class CreateUsersTable extends Migration
         $this->forge->addKey('created_by', true);
         $this->forge->addKey('username');
 
-        // Define primary key
         $this->forge->addPrimaryKey('id');
 
-        $this->forge->createTable('users');
+        $this->forge->createTable('testing');
 
-        // Modify id column to be auto-increment
-        $this->db->query('ALTER TABLE users MODIFY id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT');
     }
 
     public function down()
     {
-        $this->forge->dropTable('users');
+        $this->forge->dropTable('testing');
     }
 }
