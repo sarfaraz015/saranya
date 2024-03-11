@@ -115,11 +115,6 @@ class CreateUsersTable extends Migration
                 'constraint' => 1,
                 'default' => 0,
             ],
-            // 'updated_on' => [
-            //     'type' => 'TIMESTAMP',
-            //     'default' => $this->currentTimestamp(),
-            //     'on update CURRENT_TIMESTAMP' => true,
-            // ],
             'updated_on' => [
                 'type' => 'TIMESTAMP',
                 'on update CURRENT_TIMESTAMP' => true,
@@ -138,23 +133,9 @@ class CreateUsersTable extends Migration
             ],
         ]);
 
+        // $this->forge->addPrimaryKey('id');
         $this->forge->addKey('id', true);
-        $this->forge->addUniqueKey('email', 'users_email_uniq');
-        $this->forge->addUniqueKey('uid', 'users_uid_uniq');
-        $this->forge->addUniqueKey('activation_selector');
-        $this->forge->addUniqueKey('forgotten_password_selector');
-        $this->forge->addUniqueKey('remember_selector');
-        $this->forge->addKey('updated_by', true);
-        $this->forge->addKey('created_by', true);
-        $this->forge->addKey('username');
-
-        // Define primary key
-        $this->forge->addPrimaryKey('id');
-
         $this->forge->createTable('users');
-
-        // Modify id column to be auto-increment
-        $this->db->query('ALTER TABLE users MODIFY id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT');
     }
 
     public function down()
