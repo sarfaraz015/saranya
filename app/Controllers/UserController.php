@@ -92,6 +92,8 @@ public function encryptUserData($data)
 
 }
 
+
+// final
 public function register()
 {
     if ($this->request->getMethod() === 'post') 
@@ -197,6 +199,7 @@ function blockUserMessage()
 }
 
 
+// final
 public function login()
 {
     if ($this->request->getMethod() === 'post') 
@@ -268,7 +271,7 @@ public function login()
                         $token_data = array(
                             'token' => $response['token'],
                             'login_active_status'=>1,
-                            'updated_at'=>$currentDate,
+                            // 'updated_at'=>$currentDate,
                             'hit_time'=>$currentDate
                         );
                         $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
@@ -298,7 +301,7 @@ public function login()
 						'uid' => $user_details->uid,
 						'token' => $response['token'],
 						'login_active_status'=>1,
-                        'created_at'=>$currentDate,
+                        'created_on'=>$currentDate,
                         'hit_time'=>$currentDate,
 					);
                     $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
@@ -369,7 +372,7 @@ public function forgot_password()
                 'email'=>$email,
                 'otp'=>$otp,
                 'otp_active_status'=>1,
-                'created_at'=>$currentDate
+                'created_on'=>$currentDate
             );
 
             if($this->usermodel->insertOTP($data))
@@ -491,7 +494,7 @@ public function logout()
 			'token'=>'',
             'hit_time'=>null,
 			'login_active_status'=>0,
-            'updated_at'=>$currentDate
+            // 'updated_at'=>$currentDate
 		);
         $this->userlibrary->storeLogs(debug_backtrace(),$userId=null,$token->getValue(),null,$response);
 		if($this->usermodel->destroyToken($token->getValue(),$data)==1){

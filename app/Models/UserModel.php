@@ -4,6 +4,7 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use App\Libraries\SecureDataHandler;
+// use App\Libraries\Lib_log;
 
 class UserModel extends Model
 {
@@ -12,6 +13,7 @@ class UserModel extends Model
 
 public function __construct()
 {
+        // $testlib = new Lib_log();
         $this->db = \Config\Database::connect();
         $secret_key = $_ENV['ENCRYPTION_KEY'];
         $salt = $_ENV['SALT'];
@@ -52,14 +54,14 @@ public function getUserDetails($userId)
 
 public function insertToken($data)
 {
-        $query = $this->db->table('users_tokens');
+        $query = $this->db->table('users_session_tokens');
         return $query->insert($data);
 
 }
 
 public function updateToken($data,$userId)
 {
-        $id = $this->db->table('users_tokens')
+        $id = $this->db->table('users_session_tokens')
         ->where('uid', $userId)
         ->update($data);
         return $id;      
@@ -67,7 +69,7 @@ public function updateToken($data,$userId)
 
 public function verifyToken($token)
 {
-        $row = $this->db->table('users_tokens')
+        $row = $this->db->table('users_session_tokens')
                 ->select('*')
                 ->where('token', $token)
                 ->get()
@@ -80,7 +82,7 @@ public function destroyToken($token,$data)
 {
         if($this->verifyToken($token))
         {
-                $this->db->table('users_tokens')
+                $this->db->table('users_session_tokens')
                 ->where('token', $token)
                 ->update($data);
                 return 1;       
@@ -101,7 +103,7 @@ public function updateLastLoginInUsers($userId)
 
 public function checkUserTimeout($token)
 {
-        $q = "SELECT * FROM users_tokens WHERE token ='{$token}'";
+        $q = "SELECT * FROM users_session_tokens WHERE token ='{$token}'";
         $query = $this->db->query($q); 
         return $query->getRow();
 }
@@ -110,7 +112,7 @@ public function checkUserTimeout($token)
 
 public function resetUsersTimeout($token,$data)
 {
-        $this->db->table('users_tokens')
+        $this->db->table('users_session_tokens')
         ->where('token', $token)
         ->update($data);
 }
@@ -170,7 +172,7 @@ public function deactivateOTPOnResetPassword($user_id,$otp)
         ->where('uid',$user_id)
         ->update([
                 'otp_active_status'=>0,
-                'updated_at'=>$currentDate
+                // 'updated_at'=>$currentDate
         ]);
 }
 
@@ -183,7 +185,7 @@ public function deactivateOldOTP($user_id)
         ->where('uid',$user_id)
         ->update([
                 'otp_active_status'=>0,
-                'updated_at'=>$currentDate
+                // 'updated_on'=>$currentDate
         ]);
 }
 
@@ -217,7 +219,7 @@ public function storeUserLogHistory($data)
 
 public function getToken($user_id)
 {
-        $q = "SELECT * FROM users_tokens WHERE `uid`='{$user_id}'";
+        $q = "SELECT * FROM users_session_tokens WHERE `uid`='{$user_id}'";
         $query = $this->db->query($q); 
         return $query->getRow();
 }
@@ -225,7 +227,7 @@ public function getToken($user_id)
 
 public function getUidFromUsersTokens($token)
 {
-        $q = "SELECT * FROM users_tokens WHERE `token`='{$token}'";
+        $q = "SELECT * FROM users_session_tokens WHERE `token`='{$token}'";
         $query = $this->db->query($q); 
         return $query->getRow();
 }
@@ -233,28 +235,28 @@ public function getUidFromUsersTokens($token)
 
 public function checkUserIdIsAvailableInApiLogsTable($user_id)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}'";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}'";
         $query = $this->db->query($q); 
         return $query->getRow(); 
 }
 
 public function checkUserIdAndApiURL($user_id,$url)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$url}'";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}' AND `api_url`='{$url}'";
         $query = $this->db->query($q); 
         return $query->getRow(); 
 }
 
 public function getApiLogs($user_id,$apiURL)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
         $query = $this->db->query($q);
         return $query->getRow();          
 }
 
 public function insertApiLogs($data)
 {
-        $this->db->table('api_logs')
+        $this->db->table('api_concurrent_request_log')
                 ->insert($data);
                 $insertedID = $this->db->insertID();
                 return $insertedID;  
@@ -263,7 +265,7 @@ public function insertApiLogs($data)
 
 public function updateApiLogs($user_id,$apiUrl,$data)
 {
-        $this->db->table('api_logs')
+        $this->db->table('api_concurrent_request_log')
         ->where('user_id',$user_id)
         ->where('api_url',$apiUrl)
         ->update($data);
@@ -272,14 +274,14 @@ public function updateApiLogs($user_id,$apiUrl,$data)
 
 public function timeCheckerToReleaseUser($user_id,$apiURL)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `hit_count`>=3";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}' AND `hit_count`>=3";
         $query = $this->db->query($q);
         return $query->getRow();  
 }
 
 public function releaseUserApis($user_id,$data)
 {
-        $this->db->table('api_logs')
+        $this->db->table('api_concurrent_request_log')
         ->where('user_id',$user_id)
         ->update($data);  
 }
@@ -289,7 +291,7 @@ public function releaseUserApis($user_id,$data)
 // Function not in use : 
 public function checkUsersMaxApiHitCount($user_id,$apiURL)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}' AND `api_url`='{$apiURL}'";
         $query = $this->db->query($q);
         return $query->getRow(); 
 }
@@ -297,7 +299,7 @@ public function checkUsersMaxApiHitCount($user_id,$apiURL)
 
 public function checkAnyApiHasMaxCountForUser($user_id)
 {
-        $q = "SELECT * FROM api_logs WHERE `user_id`='{$user_id}' AND `hit_count`>2";
+        $q = "SELECT * FROM api_concurrent_request_log WHERE `user_id`='{$user_id}' AND `hit_count`>2";
         $query = $this->db->query($q);
         return $query->getRow(); 
 }

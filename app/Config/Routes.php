@@ -49,7 +49,7 @@ $routes->get('/testapi', 'UserController::testapi');
 // $routes->post('/datetime', 'UserController::datetime');
 
 
-$routes->post('/datetime', 'TestController::datetime');
+$routes->get('/datetime', 'TestController::datetime');
 
 $routes->get('/dashboard', 'UserController::dashboard');
 $routes->get('/about', 'UserController::about');

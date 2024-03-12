@@ -43,7 +43,7 @@ class Lib_log
             'time' => date('Y-m-d H:i:s')
         );
 
-        $this->dbmodel->table('logs')->insert($data); 
+        $this->dbmodel->table('error_logs')->insert($data); 
     }
 
     public function exception_handler($exception)
@@ -58,6 +58,6 @@ class Lib_log
             'ip_address' => $_SERVER['REMOTE_ADDR'],
             'time' => date('Y-m-d H:i:s')
         );
-        $this->dbmodel->table('logs')->insert($data);
+        $this->dbmodel->table('error_logs')->insert($data);
     }
 }

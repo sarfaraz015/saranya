@@ -2,6 +2,7 @@
 namespace App\Libraries;
 use App\Libraries\SecureDataHandler;
 use App\Models\UserModel;
+// use App\Libraries\Lib_log;
 
 class UserLibrary{
 
@@ -11,6 +12,7 @@ class UserLibrary{
 
 public function __construct()
 {
+    // $testlib = new Lib_log();
 	$this->usermodel = new UserModel();
 	$this->db = \Config\Database::connect();
 	$secret_key = $_ENV['ENCRYPTION_KEY'];
@@ -27,14 +29,14 @@ public function checkUserAlreadyExists($email)
 
 public function userExistsInUsersToken($userId)
 {
-	$q = "SELECT * FROM users_tokens WHERE `uid` = {$userId}";
+	$q = "SELECT * FROM users_session_tokens WHERE `uid` = {$userId}";
 	$query = $this->db->query($q); 
 	return $query->getRow();
 }
 
 public function checkActiveStatus($userId)
 {
-    $query = $this->db->table('users_tokens')
+    $query = $this->db->table('users_session_tokens')
                 ->select('*')
                 ->where('uid', $userId)
 				->where('login_active_status',1)
@@ -74,7 +76,7 @@ public function checkTimeOut($user_id,$token)
 
 public function verifyTokenIsValid($token)
 {
-        $row = $this->db->table('users_tokens')
+        $row = $this->db->table('users_session_tokens')
                 ->select('*')
                 ->where('token', $token)
                 ->get()
@@ -128,14 +130,14 @@ public function checkTimeOutForOTP($user_id,$otp)
 	$OTPTimeOutStatus = '';
 
 			$row = $this->usermodel->checkOTPTimeout($user_id,$otp);
-			$created_at = $row->created_at;
+			$created_at = $row->created_on;
 
 			$currentDate = strtotime($currentDate);
 			$created_at = strtotime($created_at);
 
 			$diff = abs($currentDate - $created_at);
 			
-			if($diff > 60*1)
+			if($diff > 60*2)
 			{
 				$OTPTimeOutStatus = 0;	
 			}

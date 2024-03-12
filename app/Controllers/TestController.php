@@ -22,7 +22,7 @@ class TestController extends BaseController
     
         
     
-        $myTime = new Time('+3 week');
+        // $myTime = new Time('+3 week');
         // echo $myTime;
 
         // $myTime = new Time();
@@ -56,7 +56,15 @@ class TestController extends BaseController
         // $time = Time::createFromTimestamp(1709373428, 'Asia/Kolkata', 'en_US');
         //  echo $time;
 
-        // die;
+      
+
+        // $time = Time::parse('January 10, 2017 21:50:00', 'Asia/Kolkata');
+
+        // echo $time;
+
+        $time = Time::createFromTimestamp(1710213495, 'Asia/Kolkata', 'en_US');
+        echo $time;
+          die;
     }
 
 
