@@ -16,7 +16,25 @@ class App extends BaseConfig
      *
      *    http://example.com/
      */
-    public string $baseURL = 'http://localhost:8080/';
+
+    //  public string $baseURL;
+    //  public function __construct(){
+    //     // echo "inside constructor of app";
+    //     $this->baseURL = $_ENV['app_baseURL'];
+    //     // $this->baseURL = $_ENV['app.baseURL'];
+    //     echo $this->baseURL;
+    // }
+
+    public string $baseURL = 'http://localhost:8080/appfile';
+
+    // echo $baseURL;die;
+
+   
+    
+
+    // public string $baseURL = $_ENV['app_baseURL'];
+
+    // echo "Inside meramerchant-ci4";die;
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

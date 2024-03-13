@@ -258,6 +258,16 @@ public function set_permissions_for_folder()
     die;
 }
 
+public function testBaseUrl()
+{
+    //  echo "testBaseUrl";die;
+    helper('url');
+
+$baseUrl = base_url();
+echo " / From controller / :".$baseUrl;
+die;
+}
+
 
 
 
