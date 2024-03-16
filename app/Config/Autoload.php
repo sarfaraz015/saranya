@@ -4,6 +4,8 @@ namespace Config;
 
 use CodeIgniter\Config\AutoloadConfig;
 
+// echo "app-Autoload.php / ";
+
 /**
  * -------------------------------------------------------------------
  * AUTOLOADER CONFIGURATION

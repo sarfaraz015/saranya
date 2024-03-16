@@ -1,0 +1,19 @@
+
+
+type .ssh\id_rsa.pub
+
+
+ssh devapimeramerchantcom@meramerchant.com
+cd public_html
+ls -la
+<do to changes>
+exit 
+
+
+vim filename
+
+press i (to do changes)
+
+https://dev.api.meramerchant.com/
+
+:q!  or  :wq

@@ -2,6 +2,8 @@
 
 namespace Config;
 
+// echo "config-paths.php/";
+
 /**
  * Paths
  *
@@ -25,6 +27,7 @@ class Paths
      */
     public string $systemDirectory = __DIR__ . '/../../vendor/codeigniter4/framework/system';
 
+    // echo $systemDirectory;
     /**
      * ---------------------------------------------------------------
      * APPLICATION FOLDER NAME

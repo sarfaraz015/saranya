@@ -4,6 +4,10 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 
+// $baseURL = $_ENV['app_baseURL'];
+
+// $baseURL = getenv('app_baseURL');
+// echo $baseURL;die;
 class App extends BaseConfig
 {
     /**
@@ -16,23 +20,26 @@ class App extends BaseConfig
      *
      *    http://example.com/
      */
+    // $this->baseURL = $_ENV['app_baseURL'];
 
-    //  public string $baseURL;
-    //  public function __construct(){
-    //     // echo "inside constructor of app";
-    //     $this->baseURL = $_ENV['app_baseURL'];
-    //     // $this->baseURL = $_ENV['app.baseURL'];
-    //     echo $this->baseURL;
-    // }
+    public string $baseURL;
 
-    public string $baseURL = 'http://localhost:8080/appfile';
+    //  public string $baseURL = $_ENV['app_baseURL'];
+    //  echo $baseURL;die;
+     public function __construct(){
+        // echo "inside constructor of app";die;
+        $this->baseURL = $_ENV['app_baseURL'];
+        // $this->baseURL = $_ENV['app.baseURL'];
+        // echo $this->baseURL;die;
 
+        // echo "Config-App.php/";
+    }
+
+    // public string $baseURL = 'http://localhost:8080/';
+    // public string $baseURL = 'http://dev:8080/underscore22/';
+
+    // public string $baseURL = '';
     // echo $baseURL;die;
-
-   
-    
-
-    // public string $baseURL = $_ENV['app_baseURL'];
 
     // echo "Inside meramerchant-ci4";die;
 

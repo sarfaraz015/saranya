@@ -9,6 +9,8 @@ use App\Controllers\TestController;
  */
 // $routes->get('/', 'Home::index');
 
+// echo "app-routes.php / ";
+
 $routes->get('/', 'UserController::index');
 $routes->get('/test', 'UserController::test');
 

@@ -12,7 +12,10 @@ class TestController extends BaseController
 
     public function __construct(){
         helper("filesystem");
+        // echo "From test controller";
     }
+
+
 
     public function datetime()
     {
@@ -262,10 +265,16 @@ public function testBaseUrl()
 {
     //  echo "testBaseUrl";die;
     helper('url');
+    $baseUrl = base_url();
+// echo " / From controller / :".$baseUrl;
+    // echo SYSTEMPATH;
+    echo " ############## ";
+    // echo FCPATH;
+    // echo ROOTPATH;
 
-$baseUrl = base_url();
-echo " / From controller / :".$baseUrl;
-die;
+    echo "myfunction";
+    die;
+
 }
 
 
