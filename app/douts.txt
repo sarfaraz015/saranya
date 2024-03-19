@@ -1,0 +1,15 @@
+
+
+Issue with token :
+
+Token is uniq here if when we logout we will blank the token. If more than 
+one token is blank it will thrown the error.
+
+
+// {
+//     "email":"sarfraz.sk015@gmail.com",
+//     "first_name":"sarfaraz015",
+//     "last_name":"shaikh",
+//     "company":"sarsk company",
+//     "phone":"9980952926"
+// }

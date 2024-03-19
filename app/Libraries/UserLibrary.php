@@ -61,7 +61,7 @@ public function checkTimeOut($user_id,$token)
 
 			$diff = abs($currentDate - $lastHitDate);
 			
-			if($diff > 60*1)
+			if($diff > 60*5)
 			{
 				$userTimeOutStatus = 0;	
 			}

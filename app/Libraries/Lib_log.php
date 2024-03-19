@@ -24,6 +24,7 @@ class Lib_log
     public $dbmodel;
     public function __construct()
     {
+        // echo "Lib_log constructor";
         $this->dbmodel = \Config\Database::connect();
 
         set_error_handler(array($this, 'error_handler'));

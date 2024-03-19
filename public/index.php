@@ -1,6 +1,9 @@
 <?php
 
-// echo "public-index.php/";
+// include '../app/Libraries/testlib.php';
+// require '../app/Libraries/Lib_log.php';
+// echo $dum;
+// echo "public-index.php";die;
 // Check PHP version.
 $minPhpVersion = '7.4'; // If you update this, don't forget to update `spark`.
 if (version_compare(PHP_VERSION, $minPhpVersion, '<')) {

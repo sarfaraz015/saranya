@@ -22,7 +22,7 @@ class UserController extends BaseController
 
     public function __construct()
     {
-           $testlib = new Lib_log();
+        //    $testlib = new Lib_log();
            $secret_key = $_ENV['ENCRYPTION_KEY'];
            $salt = $_ENV['SALT'];
            $this->usermodel = new UserModel();
@@ -82,6 +82,29 @@ public function encryptUserData($data)
            'email'=>$email_encrypt,
            'created_on'=>$data['created_on'],
            'active'=>$data['active'],
+           'first_name'=>$first_name_encrypt,
+           'last_name'=>$last_name_encrypt,
+           'company'=>$company_encrypt,
+           'phone'=>$phone_encrypt
+       );
+
+       return $encryptedData;
+
+}
+
+public function encryptUserDataForUpdate($data)
+{
+       $username_encrypt = $this->dataHandler->encryptAndStore($data['username']);
+       $email_encrypt = $this->dataHandler->encryptAndStore($data['email']);
+       $first_name_encrypt = $this->dataHandler->encryptAndStore($data['first_name']);
+       $last_name_encrypt = $this->dataHandler->encryptAndStore($data['last_name']);
+       $company_encrypt = $this->dataHandler->encryptAndStore($data['company']);
+       $phone_encrypt = $this->dataHandler->encryptAndStore($data['phone']);
+
+       $encryptedData = array(
+           'uid'=>$data['uid'],
+           'username'=>$username_encrypt,
+           'email'=>$email_encrypt,
            'first_name'=>$first_name_encrypt,
            'last_name'=>$last_name_encrypt,
            'company'=>$company_encrypt,
@@ -533,6 +556,23 @@ public function decryptDataRow($data)
     return $arr;
 }
 
+public function decryptDataResult($data)
+{
+      $finalArray = [];
+       foreach($data as $key => $value){
+        $arr['id'] = $value->id;
+        $arr['uid'] = $value->uid;
+		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
+        $arr['firstname'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
+        $arr['lastname'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
+		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
+        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($value->phone);
+        array_push($finalArray,$arr);
+       }
+
+      return $finalArray;
+}
+
 
 public function testerToken()
 {
@@ -665,6 +705,208 @@ public function get_user_data()
     return $this->response->setJSON($response)->setStatusCode($errorCode);
 
 }
+
+public function get_all_users()
+{
+    $byPass = false;
+    $tester_token = '';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+      $response = [];
+      $errorCode = '';
+  
+      $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+  
+      if($token!='')
+      {
+          $uid = '';
+          if($byPass)
+          {
+              $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+          }
+          else
+          {
+              $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+              $uid = $userdata?$userdata->uid:'';
+          }
+  
+          if($uid)
+          {
+              $checkTimeoutStatus = true;
+              if(!$byPass)
+              {
+                  $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+              }
+              
+              $result = $this->usermodel->getAllUserDetails();
+  
+              if(!$checkTimeoutStatus)
+              {
+                  return redirect()->route('logout');
+              }
+              $decryptedUserData = $this->decryptDataResult($result);
+              $response['message']= "User details";
+              $response['data']= $decryptedUserData;
+              $response['response']=true;
+              $errorCode = 200;
+              $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+          }
+          else
+          {
+              if($byPass)
+              {
+                  $response['message']= "Tester user not registered in our database";
+                  $response['response']=false;
+                  $errorCode = 401;
+              }
+              else
+              {
+                  $response['message']= "Invalid user token";
+                  $response['response']=false;
+                  $errorCode = 401;
+              }
+          }
+      }
+      else
+      {
+          $response['message']= "No user token found";
+          $response['response'] = false;
+          $errorCode = 401;
+      }
+  
+      return $this->response->setJSON($response)->setStatusCode($errorCode);
+}
+
+public function update_user()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+
+        $byPass = false;
+        $tester_token = '';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        // $token = $this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $errorCode = 401;
+            return $this->response->setJSON($response)->setStatusCode($errorCode);
+        }
+
+        // $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+        // $uid = $userdata?$userdata->uid:'';
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+        // print($uid);die;
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            } 
+        }
+        
+
+        $checkTimeoutStatus = true;
+        if(!$byPass)
+        {
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+        }
+        
+        if(!$checkTimeoutStatus)
+        {
+            return redirect()->route('logout');
+        }
+
+        $rules = [
+            'email'=>'required|valid_email',
+            'first_name'=>'required',
+            'last_name'=>'required',
+            'company'=>'required',
+            'phone'=>'required'
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['errors'] = $this->validator->getErrors();
+            $errorCode = 401;
+            $response['response'] = false;
+            return $this->response->setJSON($response)->setStatusCode($errorCode);
+        }
+    
+        $json_data = $this->request->getJSON();
+
+        $data = array(
+            'uid'=>$uid,
+            'username'=>trim($json_data->first_name).trim($json_data->last_name),
+            'email'=>trim($json_data->email),
+            'first_name'=>trim($json_data->first_name),
+            'last_name'=>trim($json_data->last_name),
+            'company'=>trim($json_data->company),
+            'phone'=>trim($json_data->phone)
+        );
+
+        $encryptedData = $this->encryptUserDataForUpdate($data);
+
+        $this->usermodel->updateUserData($encryptedData);
+        $response['message'] = "Profile updated successfully";
+        $errorCode = 200;
+        $response['response'] = true;
+        return $this->response->setJSON($response)->setStatusCode($errorCode);
+    }
+
+}
+
 
 public function testcode()
 {

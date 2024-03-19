@@ -52,6 +52,16 @@ public function getUserDetails($userId)
         return $row; 
 }
 
+public function getAllUserDetails()
+{
+        $query = $this->db->table('users')
+                ->select('*')
+                ->get();
+
+        $result = $query->getResult();
+        return $result; 
+}
+
 public function insertToken($data)
 {
         $query = $this->db->table('users_session_tokens');
@@ -304,6 +314,13 @@ public function checkAnyApiHasMaxCountForUser($user_id)
         return $query->getRow(); 
 }
 
+
+public function updateUserData($data)
+{
+        $this->db->table('users')
+        ->where('uid',$data['uid'])
+        ->update($data);  
+}
 
 
 

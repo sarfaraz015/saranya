@@ -37,8 +37,8 @@ $routes->get('/about', 'UserController::about');
 $routes->get('/contact', 'UserController::contact');
 $routes->get('/chekApiHitTimings', 'UserController::chekApiHitTimings');
 
-
-
+$routes->get('/get_all_users', 'UserController::get_all_users');
+$routes->post('/update_user', 'UserController::update_user');
 
 
 // ################## TESTING URLS ###########################
