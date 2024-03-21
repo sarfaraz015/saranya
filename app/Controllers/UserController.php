@@ -121,6 +121,7 @@ public function register()
 {
     if ($this->request->getMethod() === 'post') 
     {
+        $finalResponse = '';
         $response = [];
         $errorCode = '';
         
@@ -136,10 +137,17 @@ public function register()
     
         if(!$this->validate($rules))
         {
-            $response['errors'] = $this->validator->getErrors();
-            $errorCode = 401;
+            $response['message'] = $this->validator->getErrors();
             $response['response'] = false;
-            return $this->response->setJSON($response)->setStatusCode($errorCode);
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            unset($inputData->password);
+            unset($inputData->password_confirm);
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
         }
     
             $json_data = $this->request->getJSON();
@@ -174,17 +182,25 @@ public function register()
                 {
                     $response['message'] = "User registered successfully";
                     $response['response'] = true;
-                    $errorCode = 200; 
+                    $response['code'] = 200;
+                    $response['result_data'] = [];
+                    $response['return_data'] = []; 
                 }
             }
             else
             {
                     $response['message'] = "User already exists in the database";
                     $response['response'] = false;
-                    $errorCode = 401; 
+                    $response['code'] = 401;
+                    $response['result_data'] = [];
+                    $inputData = $this->request->getJSON();
+                    unset($inputData->password);
+                    unset($inputData->password_confirm);
+                    $response['return_data'] = $inputData;
             }
 
-            return $this->response->setJSON($response)->setStatusCode($errorCode);
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
     
     } 
     
@@ -229,6 +245,7 @@ public function login()
     {
         $response = [];
         $errorCode = '';
+        $finalResponse = '';
 
         $rules = [
             'email'=>'required|valid_email',
@@ -256,13 +273,18 @@ public function login()
                 $this->usermodel->increaseUsersInvalidLoginAttempts($this->request->getIPAddress(),$email,time());
                 $response['message'] = "Invalid password";
                 $response['response'] = false;
-                $errorCode = 401;
+                $response['code'] = 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [
+                    "email" => $json_data->email
+                ];
+                $finalResponse = $this->userlibrary->generateResponse($response);
                 $loginAttemptStatus = $this->userlibrary->checkLoginAttemptsExceed($email);
                 if($loginAttemptStatus)
                 {
                     return redirect()->to('blockUserMessage')->with('email', $email);
                 }
-                return $this->response->setJSON($response)->setStatusCode($errorCode);
+                return $this->response->setJSON($finalResponse);
             } 
 
 
@@ -272,9 +294,12 @@ public function login()
                 if($this->userlibrary->checkActiveStatus($userId)){
                        
                         $response['message']= "User ".$email." already logged in";
-                        $response['token']=$this->userlibrary->checkActiveStatus($userId)->token;
                         $response['response'] = true;
-                        $errorCode = 200;
+                        $response['code'] = 200;
+                        $response['result_data'] = [
+                            'token' => $this->userlibrary->checkActiveStatus($userId)->token,
+                        ];
+                        $response['return_data'] = [];
                     }
                     else
                     {
@@ -287,19 +312,23 @@ public function login()
                         date_default_timezone_set('Asia/Kolkata');
                         $currentDate = date("Y:m:d H:i:s");
                         $this->usermodel->updateLastLoginInUsers($userId);
-                        // $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
                         $response['message']= "Welcome back ".$email;
-                        $response['token']= $this->generate_token();
                         $response['response'] = true;
+                        $response['code'] = 200;
+                        $generatedToken = $this->generate_token();
+                        $response['result_data'] = [
+                            'token' => $generatedToken,
+                        ];
+                        $response['return_data'] = [];
+
                         $token_data = array(
-                            'token' => $response['token'],
+                            'token' => $generatedToken,
                             'login_active_status'=>1,
-                            // 'updated_at'=>$currentDate,
-                            'hit_time'=>$currentDate
+                            'hit_time'=>$currentDate,
+                            'is_expired'=>0,
                         );
                         $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
                         $updated_id = $this->usermodel->updateToken($token_data,$userId);
-                        $errorCode = 200;
                     }
             }
             else
@@ -311,25 +340,28 @@ public function login()
                 }
                     $user_details = $this->usermodel->getUserDetails($userId);
                     $this->usermodel->updateLastLoginInUsers($userId);
-                    // $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null);
-					$response['user']= "Welcome - : ".$this->dataHandler->retrieveAndDecrypt($user_details->email);
-					$response['message']="User logged in successfully";
-					$response['token']= $this->generate_token();
+					$response['message']= "Welcome - : ".$this->dataHandler->retrieveAndDecrypt($user_details->email);
+                    $generatedToken = $this->generate_token();
 					$response['response'] = true;
+                    $response['code'] = 200;
+                    $response['result_data'] = [
+                        'token' => $generatedToken,
+                    ];
+                    $response['return_data'] = [];
 
                     date_default_timezone_set('Asia/Kolkata');
                     $currentDate = date("Y:m:d H:i:s");
 
 					$token_data = array(
 						'uid' => $user_details->uid,
-						'token' => $response['token'],
+						'token' => $generatedToken,
 						'login_active_status'=>1,
                         'created_on'=>$currentDate,
                         'hit_time'=>$currentDate,
+                        'is_expired'=>0,
 					);
                     $this->userlibrary->storeLogs(debug_backtrace(),$userId,$token=null,$json_data,$response);
 					$inserted_id = $this->usermodel->insertToken($token_data);
-					$errorCode = 200;
             }
         }
         else
@@ -337,7 +369,11 @@ public function login()
             $this->usermodel->increaseUsersInvalidLoginAttempts($this->request->getIPAddress(),$email,time());
             $response['message'] = "Invalid email-id";
             $response['response'] = false;
-            $errorCode = 401; 
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [
+                    "email" => $json_data->email
+            ];
         }
 
         $loginAttemptStatus = $this->userlibrary->checkLoginAttemptsExceed($email);
@@ -346,7 +382,8 @@ public function login()
             return redirect()->to('blockUserMessage')->with('email', $email);
         }
         $this->usermodel->clearInvalidLoginAttempts($email);
-        return $this->response->setJSON($response)->setStatusCode($errorCode);
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
     }
    
 }
@@ -401,27 +438,39 @@ public function forgot_password()
             if($this->usermodel->insertOTP($data))
             {
                 $response['message'] = "OTP generated successfully";
-				$response['otp'] = $otp;
-				$errorCode = 200;
+				$otp = $otp;
+                $response['code'] = 200;
+                $mail_status = '';
+                $emailResponse = '';
                 if($this->userlibrary->sendOTPEmail($email,$otp))
                 {
-                    $response['mail_status'] = "Mail sent successfully";
-                    $response['response'] = true;
+                    $mail_status = "Mail sent successfully";
+                    $emailResponse = true;
                 }
                 else
                 {
-                    $response['mail_status'] = "Mail failed";
-                    $response['response'] = false;
+                    $mail_status = "Mail failed";
+                    $emailResponse = false;
                 }
+                $response['response'] = 200; 
+                $response['result_data'] = [
+                     'email_status' => $mail_status,
+                     'email_response'=> $emailResponse,
+                     'otp'=>$otp
+                ];
+                $response['return_data'] = [];
             }
         }
         else
         {
             $response['message'] = "Invalid email-id";
             $response['response'] = false;
-            $errorCode = 401; 
+            $response['code'] = 401; 
+            $response['result_data'] = [];
+            $response['return_data'] = [];
         }
-        return $this->response->setJSON($response)->setStatusCode($errorCode);
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
     }    
 
 }
@@ -454,6 +503,7 @@ public function reset_password()
     {
         $response = [];
         $errorCode = '';
+        $finalResponse = '';
         $rules = [
             'otp'=>'required',
             'new_password'=>'required',
@@ -462,10 +512,15 @@ public function reset_password()
 
         if(!$this->validate($rules))
         {
-            $response['errors'] = $this->validator->getErrors();
-            $errorCode = 401;
+            $response['message'] = $this->validator->getErrors();
+            $response['code'] = 200;
             $response['response'] = false;
-            return $this->response->setJSON($response)->setStatusCode($errorCode);
+            $response['result_data'] = [];
+            $response['return_data'] = [
+                "data"=>$this->request->getJSON()
+            ];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
         }
 
         $json_data = $this->request->getJSON();
@@ -479,24 +534,32 @@ public function reset_password()
                 {
                     $response['message']="Password updated successfully";
 					$response['response']=true;
-					$errorCode = 200; 
+                    $response['code'] = 200;
+                    $response['result_data'] = [];
+                    $response['return_data'] = [];
                 }
                 else
                 {
                     $response['message']="Password updation failed";
                     $response['error']="OTP expired";
 					$response['response']=false;
-					$errorCode = 401;
+                    $response['code'] = 401;
+                    $response['result_data'] = [];
+                    $response['return_data'] = [];
                 }
            }
            else
            {
                 $response['message']="Invalid OTP";
                 $response['response']=false;
-                $errorCode = 401;
+                $response['code'] = 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [
+                    "data"=>$this->request->getJSON()
+                ];
            }
-
-           return $this->response->setJSON($response)->setStatusCode($errorCode);
+           $finalResponse = $this->userlibrary->generateResponse($response);
+           return $this->response->setJSON($finalResponse);
     }
 
 }
@@ -506,6 +569,7 @@ public function logout()
 {
     $response = [];
 	$errorCode = '';
+    $finalResponse = '';
 
     $token = $this->request->getHeader('token');
 
@@ -514,33 +578,39 @@ public function logout()
         date_default_timezone_set('Asia/Kolkata');
         $currentDate = date("Y:m:d H:i:s");
 		$data = array(
-			'token'=>'',
+			// 'token'=>'',
             'hit_time'=>null,
 			'login_active_status'=>0,
-            // 'updated_at'=>$currentDate
+            'is_expired'=>1
 		);
         $this->userlibrary->storeLogs(debug_backtrace(),$userId=null,$token->getValue(),null,$response);
 		if($this->usermodel->destroyToken($token->getValue(),$data)==1){
 			$response['message']= "Logout succesfully";
 			$response['response'] = true;
-			$errorCode = 200;
+            $response['code'] = 200;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
 		}
 		else
         {
 			$response['message']= "Invalid token";
 			$response['response'] = false;
-			$errorCode = 401;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
 		}  
 	}
 	else
     {
 		$response['message']= "No token found";
 		$response['response'] = false;
-		$errorCode = 401;
+        $response['code'] = 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
 	}
 
-    return $this->response->setJSON($response)->setStatusCode($errorCode);
-   
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
 }
 
 
@@ -625,12 +695,13 @@ public function get_user_data()
 {
     $byPass = false;
     $tester_token = '';
+    $finalResponse = '';
  
       if($this->request->getHeader('testerEmail')!=''){
             $response = $this->testerToken();
             if(!$this->testerToken()['response'])
             {
-                return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                return $this->response->setJSON($this->testerToken());
             }
             else
             {
@@ -671,12 +742,12 @@ public function get_user_data()
             {
                 return redirect()->route('logout');
             }
-            // $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
             $decryptedUserData = $this->decryptDataRow($result);
-            $response['message']= "User details";
-            $response['data']= $decryptedUserData;
+            $response['message']= "Single user details";
+            $response['code']= 200;
             $response['response']=true;
-            $errorCode = 200;
+            $response['result_data'] = $decryptedUserData;
+            $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
         else
@@ -691,7 +762,9 @@ public function get_user_data()
             {
                 $response['message']= "Invalid user token";
                 $response['response']=false;
-                $errorCode = 401;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
             }
         }
     }
@@ -699,10 +772,13 @@ public function get_user_data()
     {
         $response['message']= "No user token found";
 		$response['response'] = false;
-		$errorCode = 401;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    return $this->response->setJSON($response)->setStatusCode($errorCode);
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
 
 }
 
@@ -710,12 +786,13 @@ public function get_all_users()
 {
     $byPass = false;
     $tester_token = '';
+    $finalResponse = '';
  
       if($this->request->getHeader('testerEmail')!=''){
             $response = $this->testerToken();
             if(!$this->testerToken()['response'])
             {
-                return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                return $this->response->setJSON($this->testerToken());
             }
             else
             {
@@ -757,10 +834,11 @@ public function get_all_users()
                   return redirect()->route('logout');
               }
               $decryptedUserData = $this->decryptDataResult($result);
-              $response['message']= "User details";
-              $response['data']= $decryptedUserData;
+              $response['message']= "All users details";
+              $response['result_data']= $decryptedUserData;
+              $response['return_data'] = [];
               $response['response']=true;
-              $errorCode = 200;
+              $response['code']=true;
               $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
           }
           else
@@ -773,20 +851,25 @@ public function get_all_users()
               }
               else
               {
-                  $response['message']= "Invalid user token";
-                  $response['response']=false;
-                  $errorCode = 401;
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
               }
           }
       }
       else
       {
-          $response['message']= "No user token found";
-          $response['response'] = false;
-          $errorCode = 401;
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
       }
   
-      return $this->response->setJSON($response)->setStatusCode($errorCode);
+      $finalResponse = $this->userlibrary->generateResponse($response);
+      return $this->response->setJSON($finalResponse);
 }
 
 public function update_user()
@@ -813,19 +896,19 @@ public function update_user()
 
         $response = [];
         $errorCode = '';
+        $finalResponse = '';
 
         $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
-        // $token = $this->request->getHeader('token');
         if($token=='')
         {
             $response['message']= "No user token";
             $response['response'] = false;
-            $errorCode = 401;
-            return $this->response->setJSON($response)->setStatusCode($errorCode);
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
         }
-
-        // $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
-        // $uid = $userdata?$userdata->uid:'';
 
         $uid = '';
         if($byPass)
@@ -837,7 +920,7 @@ public function update_user()
             $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
             $uid = $userdata?$userdata->uid:'';
         }
-        // print($uid);die;
+
         if($uid=='')
         {
             if($byPass)
@@ -851,8 +934,11 @@ public function update_user()
             {
                 $response['message']= "Invalid user token";
                 $response['response']=false;
-                $errorCode = 401;
-                return $this->response->setJSON($response)->setStatusCode($errorCode);
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
             } 
         }
         
@@ -878,10 +964,15 @@ public function update_user()
     
         if(!$this->validate($rules))
         {
-            $response['errors'] = $this->validator->getErrors();
-            $errorCode = 401;
+            $response['message'] = $this->validator->getErrors();
             $response['response'] = false;
-            return $this->response->setJSON($response)->setStatusCode($errorCode);
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
         }
     
         $json_data = $this->request->getJSON();
@@ -900,9 +991,13 @@ public function update_user()
 
         $this->usermodel->updateUserData($encryptedData);
         $response['message'] = "Profile updated successfully";
-        $errorCode = 200;
+        $response['code'] = 200;
         $response['response'] = true;
-        return $this->response->setJSON($response)->setStatusCode($errorCode);
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
     }
 
 }
@@ -1038,6 +1133,139 @@ public function contact()
 
 
 
+
+public function test_get_users()
+{
+    //  echo "test_get_users";die;
+    $token = $this->request->getHeader('token')->getValue();
+
+    if($this->userlibrary->verifyTokenIsValid($token))
+    {
+         echo "You are alive";
+    }
+    else
+    {
+         echo "You are logged out";
+    }
+   die;
+}
+
+
+
+
+
+
+public function get_all_filtered_users()
+{
+
+    $json_data = $this->request->getJSON();
+    // print_r($json_data);die;
+    $number_of_records = $json_data->number_of_records;
+    $pagination_number = $json_data->pagination_number;
+    $search = $json_data->search;
+
+    // $number_of_records = $json_data['number_of_records'];
+    // $pagination_number = $json_data['pagination_number'];
+    // $search = $json_data['search'];
+
+    $filteredData = $this->userlibrary->getFilteredUsers($search,$number_of_records,$pagination_number);
+
+    print_r($filteredData);
+
+    die;
+
+
+
+
+
+    $byPass = false;
+    $tester_token = '';
+    $finalResponse = '';
+    $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+      $response = [];
+      $errorCode = '';
+  
+      $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+  
+      if($token!='')
+      {
+          $uid = '';
+          if($byPass)
+          {
+              $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+          }
+          else
+          {
+              $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+              $uid = $userdata?$userdata->uid:'';
+          }
+  
+          if($uid)
+          {
+              $checkTimeoutStatus = true;
+              if(!$byPass)
+              {
+                  $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+              }
+              
+              $result = $this->usermodel->getAllUserDetails();
+  
+              if(!$checkTimeoutStatus)
+              {
+                return redirect()->to($logoutUrl);
+              }
+              $decryptedUserData = $this->decryptDataResult($result);
+              $response['message']= "All users details";
+              $response['result_data']= $decryptedUserData;
+              $response['return_data'] = [];
+              $response['response']=true;
+              $response['code']=true;
+              $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+          }
+          else
+          {
+              if($byPass)
+              {
+                  $response['message']= "Tester user not registered in our database";
+                  $response['response']=false;
+                  $errorCode = 401;
+              }
+              else
+              {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+              }
+          }
+      }
+      else
+      {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+      }
+  
+      $finalResponse = $this->userlibrary->generateResponse($response);
+      return $this->response->setJSON($finalResponse);
+}
 
 
 }

@@ -6,10 +6,64 @@ Token is uniq here if when we logout we will blank the token. If more than
 one token is blank it will thrown the error.
 
 
-// {
-//     "email":"sarfraz.sk015@gmail.com",
-//     "first_name":"sarfaraz015",
-//     "last_name":"shaikh",
-//     "company":"sarsk company",
-//     "phone":"9980952926"
-// }
+
+{
+    "email":"sarfu@gmail.com",
+    "first_name":"sarfu",
+    "last_name":"fufu",
+    "company":"fufu company",
+    "phone":"9980952900"
+}
+
+{
+    "email":"sarfraz.sk015@gmail.com",
+    "first_name":"sarfaraz015",
+    "last_name":"shaikh",
+    "company":"sarsk company2",
+    "phone":"9980952926"
+}
+
+
+{
+    "success":true,
+    "status":200,
+    "content":{
+        "result":true,
+        "message":"hhh",
+        "return_data":{},
+        "result_data":{
+             "token": "176b0ca85ef3c03d82039437056e802f34a8163c5582830c63c8f9403f16555c"
+        }
+    }
+}
+
+return / error
+
+
+#####################################
+
+Get filter data
+
+{
+    "number_of_records":25,
+    "pagination_number":3,
+    "search":[
+        {"key":"sarfaraz","column_name":"first_name","type":"or"},
+        {"key":"sarfaraz","column_name":"last_name","type":"and"},
+        {"key":"9886","column_name":"mobile","type":"end"}
+        ]
+}
+
+{
+    "number_of_records":25,
+    "pagination_number":3,
+    "search":[]
+}
+
+
+super user - sarfraz.sk015@gmail.com
+super tester user - sarfu@gmail.com
+normal user - rameez@gmail.com
+
+
+

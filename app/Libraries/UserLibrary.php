@@ -79,6 +79,7 @@ public function verifyTokenIsValid($token)
         $row = $this->db->table('users_session_tokens')
                 ->select('*')
                 ->where('token', $token)
+                ->where('is_expired',0)
                 ->get()
                 ->getRow();     			  
         return $row;
@@ -347,6 +348,80 @@ public function chekApiHitTimings($user_id)
     
     return $response;
 
+}
+
+
+public function generateResponse($data)
+{
+    $response['success'] = true;
+    $response['status'] = 200;
+
+    $content = [];
+    $content['result'] = $data['response'];
+    $content['message'] = $data['message'];
+    $content['result_data'] = $data['result_data'];
+    $content['return_data'] = $data['return_data'];
+    
+    $response['content'] = $content;
+
+    return $response;
+}
+
+
+public function decryptDataResult($data)
+{
+      $finalArray = [];
+       foreach($data as $key => $value){
+        $arr['id'] = $value->id;
+        $arr['uid'] = $value->uid;
+		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
+        $arr['firstname'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
+        $arr['lastname'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
+		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
+        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($value->phone);
+        array_push($finalArray,$arr);
+       }
+
+      return $finalArray;
+}
+
+
+public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
+{
+    $query = $this->db->table('users');
+    $query->where($searchCriteria[0]->column_name, $this->dataHandler->encryptAndStore($searchCriteria[0]->key));
+    foreach ($searchCriteria as $index => $criteria) {
+        if($index!=0)
+        {
+            $key = $criteria->key;
+            $columnName = $criteria->column_name;
+            $type = $criteria->type;
+    
+    
+            switch ($searchCriteria[$index-1]->type) {
+                case 'and':
+                    $query->where($columnName, $this->dataHandler->encryptAndStore($key));
+                    break;
+                case 'or':
+                    $query->orWhere($columnName, $this->dataHandler->encryptAndStore($key));
+                    break;
+                case 'end':
+                    $query->like($columnName, $this->dataHandler->encryptAndStore($key), 'after');
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+        $offset = ($paginationNumber - 1) * $numberOfRecords;
+        $query->limit($numberOfRecords, $offset);
+
+      $result = $query->get()->getResult();
+      $decryptedData = $this->decryptDataResult($result);
+   
+    // $sql = $query->getCompiledSelect();
+    return $decryptedData;
 }
 
 
