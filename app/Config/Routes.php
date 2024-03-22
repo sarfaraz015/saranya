@@ -37,12 +37,15 @@ $routes->get('/about', 'UserController::about');
 $routes->get('/contact', 'UserController::contact');
 $routes->get('/chekApiHitTimings', 'UserController::chekApiHitTimings');
 
-$routes->get('/get_all_users', 'UserController::get_all_users');
+$routes->post('/get_all_users', 'UserController::get_all_users');
 $routes->post('/update_user', 'UserController::update_user');
 $routes->post('/test_get_users', 'UserController::test_get_users');
 
-$routes->post('/get_all_filtered_users', 'UserController::get_all_filtered_users');
+// $routes->post('/get_all_filtered_users', 'UserController::get_all_filtered_users');
+$routes->get('/checkQueryBuilder', 'UserController::checkQueryBuilder');
+$routes->get('/getAllUsersForTest', 'UserController::getAllUsersForTest');
 
+$routes->post('/get_main_menu', 'UserController::get_main_menu');
 
 
 

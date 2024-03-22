@@ -46,11 +46,11 @@ Get filter data
 
 {
     "number_of_records":25,
-    "pagination_number":3,
+    "pagination_number":1,
     "search":[
-        {"key":"sarfaraz","column_name":"first_name","type":"or"},
-        {"key":"sarfaraz","column_name":"last_name","type":"and"},
-        {"key":"9886","column_name":"mobile","type":"end"}
+        {"key":"sarfraz","column_name":"first_name","type":"or"},
+        {"key":"sarfraz","column_name":"last_name","type":"and"},
+        {"key":"9980952926","column_name":"phone","type":"end"}
         ]
 }
 
@@ -58,6 +58,18 @@ Get filter data
     "number_of_records":25,
     "pagination_number":3,
     "search":[]
+}
+
+# Updated filter search : 
+
+{
+    "number_of_records":25,
+    "pagination_number":1,
+    "search":[
+        {"key":"sarfraz","operator":"=","column_name":"first_name","type":"or"},
+        {"key":"sarfraz","operator":"=","column_name":"last_name","type":"and"},
+        {"key":"9980952926","operator":"like","column_name":"phone","type":"end"}
+        ]
 }
 
 

@@ -375,8 +375,8 @@ public function decryptDataResult($data)
         $arr['id'] = $value->id;
         $arr['uid'] = $value->uid;
 		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
-        $arr['firstname'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
-        $arr['lastname'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
+        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
+        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
 		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
         $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($value->phone);
         array_push($finalArray,$arr);
@@ -386,43 +386,178 @@ public function decryptDataResult($data)
 }
 
 
+// Working method : 
+// public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
+// {
+//     $query = $this->db->table('users');
+//     $query->where($searchCriteria[0]->column_name, $this->dataHandler->encryptAndStore($searchCriteria[0]->key));
+//     foreach ($searchCriteria as $index => $criteria) {
+//         if($index!=0)
+//         {
+//             $key = $criteria->key;
+//             $columnName = $criteria->column_name;
+//             $type = $criteria->type;
+    
+    
+//             switch ($searchCriteria[$index-1]->type) {
+//                 case 'and':
+//                     $query->where($columnName, $this->dataHandler->encryptAndStore($key));
+//                     break;
+//                 case 'or':
+//                     $query->orWhere($columnName, $this->dataHandler->encryptAndStore($key));
+//                     break;
+//                 case 'end':
+//                     $query->like($columnName, $this->dataHandler->encryptAndStore($key), 'after');
+//                     break;
+//                 default:
+//                     break;
+//             }
+//         }
+//     }
+
+//         $offset = ($paginationNumber - 1) * $numberOfRecords;
+//         $query->limit($numberOfRecords, $offset);
+
+//       $result = $query->get()->getResult();
+//     //   $decryptedData = $this->decryptDataResult($result);
+   
+//     // $sql = $query->getCompiledSelect();
+//     return $result;
+// }
+
+
+// With operators : 
 public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('users');
-    $query->where($searchCriteria[0]->column_name, $this->dataHandler->encryptAndStore($searchCriteria[0]->key));
+    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $this->dataHandler->encryptAndStore($searchCriteria[0]->key));
     foreach ($searchCriteria as $index => $criteria) {
         if($index!=0)
         {
             $key = $criteria->key;
             $columnName = $criteria->column_name;
             $type = $criteria->type;
-    
-    
-            switch ($searchCriteria[$index-1]->type) {
-                case 'and':
-                    $query->where($columnName, $this->dataHandler->encryptAndStore($key));
-                    break;
-                case 'or':
-                    $query->orWhere($columnName, $this->dataHandler->encryptAndStore($key));
-                    break;
-                case 'end':
-                    $query->like($columnName, $this->dataHandler->encryptAndStore($key), 'after');
-                    break;
-                default:
-                    break;
+            $operator = $criteria->operator;
+
+            if($operator == 'like'){
+                $query->like($columnName, $this->dataHandler->encryptAndStore($key));
             }
+    
+            if($operator!='like'){
+                switch ($searchCriteria[$index-1]->type) {
+                    case 'and':
+                        $query->where($columnName.$operator, $this->dataHandler->encryptAndStore($key));
+                        break;
+                    case 'or':
+                        $query->orWhere($columnName.$operator, $this->dataHandler->encryptAndStore($key));
+                        break;
+                    case 'end':
+                        // $query->like($columnName, $this->dataHandler->encryptAndStore($key), 'after');
+                        // $query->orWhere($columnName.'LIKE', $this->dataHandler->encryptAndStore($key));
+                        // $query->like($columnName, '%' . $this->dataHandler->encryptAndStore($key) . '%', 'NOT');
+                        // echo "In end";
+                        // $query->like($columnName, $this->dataHandler->encryptAndStore($key));
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
+
+
         }
     }
 
         $offset = ($paginationNumber - 1) * $numberOfRecords;
         $query->limit($numberOfRecords, $offset);
 
+        //   $sql = $query->getCompiledSelect();
+    // print_r($sql);
+
       $result = $query->get()->getResult();
-      $decryptedData = $this->decryptDataResult($result);
+    //   $decryptedData = $this->decryptDataResult($result);
+
+    //   print_r($decryptedData);
    
     // $sql = $query->getCompiledSelect();
+    // print_r($sql);
+
+    // die;
+    return $result;
+}
+
+
+public function getStandardRecords($numberOfRecords, $paginationNumber)
+{
+    $query = $this->db->table('users');
+    $offset = ($paginationNumber - 1) * $numberOfRecords;
+    $query->limit($numberOfRecords, $offset);
+    $result = $query->get()->getResult();
+    return $result;
+}
+
+
+public function checkQueryBuilder()
+{
+    // echo "checkQueryBuilder library";die;
+    $query = $this->db->table('users');
+    $query->where('first_name', 'sarfaraz');
+    $query->orWhere('last_name', 'sarfaraz');
+    $query->like('phone', '9980952926');
+            //    $query->get();
+    //   print_r($result);
+
+    $offset = (1 - 1) * 10;
+        $query->limit(25, $offset);
+
+      $sql = $query->getCompiledSelect();
+      print_r($sql);
+
+      die;
+}
+
+
+public function getAllUsersForTest()
+{
+    $result = $this->db->table('users')
+            ->get()->getResult();
+    $decryptedData = $this->decryptDataResult($result);        
+    // print_r($result);die;
     return $decryptedData;
 }
+
+
+public function getMainManuData($uid)
+{
+    $usersResult = $this->db->table('users')
+                    ->where('uid',$uid)    
+                    ->get()
+                    ->getRow();
+   
+    $menuMainModulesResult = '';
+    if($usersResult->initial_auth_level == 9)
+    {
+        $menuMainModulesResult = $this->db->table('menu_main_modules')  
+                                            ->get()
+                                            ->getResult();             
+    }
+    else
+    {
+        $usersAuthResult = $this->db->table('menu_user_auths') 
+                                    ->where('user_id',$uid)  
+                                    ->get()
+                                    ->getRow(); 
+        $mainMenuCode =  $usersAuthResult->main_menu_code;  
+        
+        $menuMainModulesResult = $this->db->table('menu_main_modules') 
+                                            ->where('code',$mainMenuCode) 
+                                            ->get()
+                                            ->getResult();
+    } 
+    
+    return $menuMainModulesResult;
+}
+
 
 
 
