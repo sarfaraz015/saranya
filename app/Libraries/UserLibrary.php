@@ -2,6 +2,7 @@
 namespace App\Libraries;
 use App\Libraries\SecureDataHandler;
 use App\Models\UserModel;
+use Config\Tester;
 // use App\Libraries\Lib_log;
 
 class UserLibrary{
@@ -9,6 +10,7 @@ class UserLibrary{
       public $db;
       public $dataHandler;
 	  public $usermodel;
+      public $tester;
 
 public function __construct()
 {
@@ -18,6 +20,7 @@ public function __construct()
 	$secret_key = $_ENV['ENCRYPTION_KEY'];
 	$salt = $_ENV['SALT'];
 	$this->dataHandler = new SecureDataHandler($secret_key, $salt);
+    $this->tester = new Tester();
 }
 
 public function checkUserAlreadyExists($email)
@@ -368,6 +371,19 @@ public function generateResponse($data)
 }
 
 
+public function decryptDataRow($data)
+{
+        $arr['id'] = $data->id;
+        $arr['uid'] = $data->uid;
+		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($data->email);
+        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($data->first_name);
+        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($data->last_name);
+		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($data->company);
+        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($data->phone);
+    return $arr;
+}
+
+
 public function decryptDataResult($data)
 {
       $finalArray = [];
@@ -386,7 +402,8 @@ public function decryptDataResult($data)
 }
 
 
-// Working method : 
+// Working method :  Not in use
+
 // public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
 // {
 //     $query = $this->db->table('users');
@@ -426,7 +443,7 @@ public function decryptDataResult($data)
 // }
 
 
-// With operators : 
+// With operators : In use 
 public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('users');
@@ -452,11 +469,6 @@ public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationN
                         $query->orWhere($columnName.$operator, $this->dataHandler->encryptAndStore($key));
                         break;
                     case 'end':
-                        // $query->like($columnName, $this->dataHandler->encryptAndStore($key), 'after');
-                        // $query->orWhere($columnName.'LIKE', $this->dataHandler->encryptAndStore($key));
-                        // $query->like($columnName, '%' . $this->dataHandler->encryptAndStore($key) . '%', 'NOT');
-                        // echo "In end";
-                        // $query->like($columnName, $this->dataHandler->encryptAndStore($key));
                         break;
                     default:
                         break;
@@ -470,19 +482,7 @@ public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationN
 
         $offset = ($paginationNumber - 1) * $numberOfRecords;
         $query->limit($numberOfRecords, $offset);
-
-        //   $sql = $query->getCompiledSelect();
-    // print_r($sql);
-
       $result = $query->get()->getResult();
-    //   $decryptedData = $this->decryptDataResult($result);
-
-    //   print_r($decryptedData);
-   
-    // $sql = $query->getCompiledSelect();
-    // print_r($sql);
-
-    // die;
     return $result;
 }
 
@@ -522,7 +522,6 @@ public function getAllUsersForTest()
     $result = $this->db->table('users')
             ->get()->getResult();
     $decryptedData = $this->decryptDataResult($result);        
-    // print_r($result);die;
     return $decryptedData;
 }
 
@@ -537,9 +536,75 @@ public function getMainManuData($uid)
     $menuMainModulesResult = '';
     if($usersResult->initial_auth_level == 9)
     {
-        $menuMainModulesResult = $this->db->table('menu_main_modules')  
+        $menuMainModulesResult = $this->db->table('menu_main_modules')
+                                            ->select('menu_main_modules.*,sm.id as sub_id,sm.code as sub_code,sm.menu_main_code as sub_menu_main_code,sm.name as sub_name,sm.description as sub_description,sm.icon_name as sub_icon_name,sm.order_no as sub_order_no,sm.created_on as sub_created_on,sm.updated_on as sub_updated_on,sm.is_deleted as sub_is_deleted')
+                                            ->join(' menu_sub_modules as sm', ' menu_main_modules.code = sm.menu_main_code','left')  
+                                            ->orderBy('menu_main_modules.order_no')
                                             ->get()
-                                            ->getResult();             
+                                            ->getResult();  
+                                                                
+        $mainMenuCodeArray = [];
+        foreach($menuMainModulesResult as $key => $value)
+        {
+                array_push($mainMenuCodeArray,$value->code);
+        }
+        
+        $mainMenuCodeArrayFiltered = array_unique($mainMenuCodeArray);
+
+        $mainMenuArray = [];
+        $tempIdArray = [];
+        foreach($mainMenuCodeArrayFiltered as $key => $main_menu_code)
+        {
+            foreach($menuMainModulesResult as $key2 => $value2)
+            {
+                    if($main_menu_code == $value2->code){
+                         
+                        if(!in_array($main_menu_code,$tempIdArray))
+                        {
+                            $arr['id'] = $value2->id;
+                            $arr['code'] = $value2->code;
+                            $arr['name'] = $value2->name;
+                            $arr['description'] = $value2->description;
+                            $arr['icon_name'] = $value2->icon_name;
+                            $arr['link'] = $value2->link;
+                            $arr['order_no'] = $value2->order_no;
+                            $arr['created_by'] = $value2->created_by;
+                            $arr['updated_by'] = $value2->updated_by;
+                            $arr['created_on'] = $value2->created_on;
+                            $arr['updated_on'] = $value2->updated_on;
+                            $arr['is_deleted'] = $value2->is_deleted;
+                            
+
+                            $subMenuArray = [];
+                            foreach($menuMainModulesResult as $key3 => $value3)
+                            {
+                                    if($main_menu_code == $value3->sub_menu_main_code)
+                                    {
+                                           $arr2['sub_id'] = $value3->sub_id;
+                                           $arr2['sub_code'] = $value3->sub_code;
+                                           $arr2['sub_menu_main_code'] = $value3->sub_menu_main_code;
+                                           $arr2['sub_name'] = $value3->sub_name;
+                                           $arr2['sub_description'] = $value3->sub_description;
+                                           $arr2['sub_icon_name'] = $value3->sub_icon_name;
+                                           $arr2['sub_order_no'] = $value3->sub_order_no;
+                                           $arr2['sub_created_on'] = $value3->sub_created_on;
+                                           $arr2['sub_updated_on'] = $value3->sub_updated_on;
+                                           $arr2['sub_is_deleted'] = $value3->sub_is_deleted;
+                                           array_push($subMenuArray,$arr2);
+                                    }
+                            }
+
+                            $arr['sub_menu'] = $subMenuArray;
+                            array_push($mainMenuArray,$arr);
+                            array_push($tempIdArray,$main_menu_code);
+
+                        }
+                           
+                    }
+            }  
+        }
+
+        $menuMainModulesResult = $mainMenuArray; 
     }
     else
     {
@@ -551,6 +616,7 @@ public function getMainManuData($uid)
         
         $menuMainModulesResult = $this->db->table('menu_main_modules') 
                                             ->where('code',$mainMenuCode) 
+                                            ->orderBy('menu_main_modules.order_no')
                                             ->get()
                                             ->getResult();
     } 
@@ -558,6 +624,140 @@ public function getMainManuData($uid)
     return $menuMainModulesResult;
 }
 
+
+public function decryptRowForSpecificColumns($data,$columns)
+{
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->retrieveAndDecrypt($value);
+                }
+        }
+   return $data;
+}
+
+
+
+public function insertUserDataInProfileChangeHistory($uid)
+{
+    $userData = $this->db->table('users')
+                            ->where('uid',$uid)    
+                            ->get()
+                            ->getRow();   
+    
+    $columns = ['username','email','first_name','last_name','company','phone'];
+    $decryptedUserData = $this->decryptRowForSpecificColumns($userData,$columns);
+
+    unset($decryptedUserData->id);
+    unset($decryptedUserData->password);
+    unset($decryptedUserData->initial_auth_level);
+    unset($decryptedUserData->activation_selector);
+    unset($decryptedUserData->activation_code);
+    unset($decryptedUserData->forgotten_password_selector);
+    unset($decryptedUserData->forgotten_password_code);
+    unset($decryptedUserData->forgotten_password_time);
+    unset($decryptedUserData->remember_selector);
+    unset($decryptedUserData->remember_code);
+    unset($decryptedUserData->ip_address);
+    unset($decryptedUserData->last_login);
+    unset($decryptedUserData->active);
+    
+    $userArray = (array)$decryptedUserData;
+    $userArray['user_id'] = $userArray['uid'];
+    unset($userArray['uid']);
+    $userObj = (object)$userArray;
+
+    $rowId = $this->usermodel->insertUserDataInProfileChangeHistory($userObj);
+    return $rowId;
+}
+
+
+
+
+// ######################## TESTING METHODS ######################
+
+public function testerTokenVerification($testerTokenEmailHeader,$testerTokenAuthorizationHeader)
+{
+    // print_r($testerTokenHeader);
+
+    // die;
+	$response = [];
+	$error_code = '';
+	$users = $this->tester->getTestersData();
+    
+	// $token = $this->request->getHeader('Authorization');
+	// $email = $this->request->getHeader('testerEmail');
+    $token = $testerTokenAuthorizationHeader;
+    $email = $testerTokenEmailHeader;
+
+    // print_r($email);die;
+
+	if($token!='')
+	{
+			if($email!='')
+			{
+				if(array_key_exists($email->getValue(),$users))
+				{
+					if('Bearer '.$users[$email->getValue()]==$token->getValue())
+					{
+						$response['message']="Tester token validated successfully";
+						$response['response'] = true;
+					}
+					else
+					{
+						$response['message']="Invalid tester token";
+						$response['response'] = false;
+					}
+                }
+                else
+                {
+                        $response['message']="Invalid tester email-id";
+                        $response['response'] = false;
+                }
+			}
+			else
+			{
+				$response['message']="No tester email-id found";
+				$response['response'] = false;
+			}
+	}
+	else
+	{
+		$response['message']="No tester token found";
+		$response['response'] = false;
+	}
+
+	return $response;
+}
+
+
+public function verify_testertoken_sessiontoken_checktimeout($testerTokenEmailHeader,$testerTokenAuthorizationHeader)
+{
+    // echo "verify_testertoken_sessiontoken_checktimeout";die;
+       $finalResponse = [];
+      if($testerTokenEmailHeader!='')
+      {
+            $finalResponse['label'] = "testerToken";
+           $testTokenResponse = $this->testerTokenVerification($testerTokenEmailHeader,$testerTokenAuthorizationHeader);
+           if($testTokenResponse['response'])
+           {
+               $finalResponse['response'] = true;
+               $finalResponse['data'] = array("token"=>$testerTokenEmailHeader->getValue());
+           }
+           else
+           {
+                $finalResponse['response'] = false;
+                $finalResponse['data'] = array("errors"=>$testTokenResponse);
+           }
+      }
+
+
+    
+    //   print_r($finalResponse);
+    //   die;
+    return $finalResponse;
+}
 
 
 

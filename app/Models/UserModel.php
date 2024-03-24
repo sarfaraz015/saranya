@@ -322,6 +322,14 @@ public function updateUserData($data)
         ->update($data);  
 }
 
+public function insertUserDataInProfileChangeHistory($data)
+{
+        $this->db->table('user_profile_change_history')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;  
+}
+
 
 
 

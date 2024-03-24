@@ -880,6 +880,8 @@ public function update_user()
 
         $byPass = false;
         $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
      
           if($this->request->getHeader('testerEmail')!=''){
                 $response = $this->testerToken();
@@ -943,7 +945,6 @@ public function update_user()
             } 
         }
         
-
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
@@ -952,7 +953,7 @@ public function update_user()
         
         if(!$checkTimeoutStatus)
         {
-            return redirect()->route('logout');
+            return redirect()->to($logoutUrl);
         }
 
         $rules = [
@@ -990,13 +991,26 @@ public function update_user()
 
         $encryptedData = $this->encryptUserDataForUpdate($data);
 
-        $this->usermodel->updateUserData($encryptedData);
-        $response['message'] = "Profile updated successfully";
-        $response['code'] = 200;
-        $response['response'] = true;
-        $response['result_data'] = [];
-        $response['return_data'] = [];
-        $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+        $rowId = $this->userlibrary->insertUserDataInProfileChangeHistory($uid);
+        if($rowId)
+        {
+            $this->usermodel->updateUserData($encryptedData);
+            $response['message'] = "Profile updated successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+        }
+        else
+        {
+            $response['message'] = "Profile Not updated : Reason (error in user profile history)";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = $data;
+        }
+        
         $finalResponse = $this->userlibrary->generateResponse($response);
         return $this->response->setJSON($finalResponse);
     }
@@ -1164,6 +1178,7 @@ public function get_all_users()
 
 
 
+// Working code : 
 public function get_main_menu()
 {
     $byPass = false;
@@ -1259,6 +1274,33 @@ public function get_main_menu()
 
 
 ################################ TESTING METHODS #######################
+
+
+public function get_main_menu_for_test()
+{
+       $testerTokenEmailHeader = $this->request->getHeader('testerEmail'); 
+       $testerTokenAuthorizationHeader = $this->request->getHeader('Authorization'); 
+    //    print_r($testerTokenHeader);die;
+       $result = $this->userlibrary->verify_testertoken_sessiontoken_checktimeout($testerTokenEmailHeader,$testerTokenAuthorizationHeader);
+
+        if(isset($result['label']) == "testerToken")
+        {
+                if($result['response']){
+                      echo $result['data']['token'];
+                }
+                else{
+                    print_r($result['data']['errors']);
+                }
+
+        }
+        else
+        {
+            //   print_r($result['data']['errors']);
+            echo "normal user";
+        }
+
+        die;
+}
 
 public function testcode()
 {

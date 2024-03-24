@@ -76,6 +76,7 @@ Get filter data
 super user - sarfraz.sk015@gmail.com
 super tester user - sarfu@gmail.com
 normal user - rameez@gmail.com
+normal user - yirjohn@gmail.com
 
 
 

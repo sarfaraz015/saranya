@@ -46,6 +46,7 @@ $routes->get('/checkQueryBuilder', 'UserController::checkQueryBuilder');
 $routes->get('/getAllUsersForTest', 'UserController::getAllUsersForTest');
 
 $routes->post('/get_main_menu', 'UserController::get_main_menu');
+$routes->post('/get_main_menu_for_test', 'UserController::get_main_menu_for_test');
 
 
 
