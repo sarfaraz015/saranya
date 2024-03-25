@@ -47,7 +47,8 @@ $routes->get('/getAllUsersForTest', 'UserController::getAllUsersForTest');
 
 $routes->post('/get_main_menu', 'UserController::get_main_menu');
 $routes->post('/get_main_menu_for_test', 'UserController::get_main_menu_for_test');
-
+$routes->post('/upload_user_profile_img', 'UserController::upload_user_profile_img');
+$routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
 
 
 // ################## TESTING URLS ###########################
@@ -63,6 +64,7 @@ $routes->get('/grant_write_permission_to_folder_php', 'TestController::grant_wri
 $routes->get('/set_folder_permission_php', 'TestController::set_folder_permission_php');
 $routes->get('/set_permissions_for_file', 'TestController::set_permissions_for_file');
 $routes->get('/set_permissions_for_folder', 'TestController::set_permissions_for_folder');
-
+$routes->get('/getUploadView', 'UserController::getUploadView');
+$routes->post('/uploadImg', 'UserController::uploadImg');
 
 

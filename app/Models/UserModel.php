@@ -331,6 +331,14 @@ public function insertUserDataInProfileChangeHistory($data)
 }
 
 
+public function updateUserProfileImage($data)
+{
+        $this->db->table('users')
+        ->where('uid',$data['uid'])
+        ->update($data); 
+}
+
+
 
 
 }
