@@ -110,7 +110,8 @@ public function encryptUserDataForUpdate($data)
            'first_name'=>$first_name_encrypt,
            'last_name'=>$last_name_encrypt,
            'company'=>$company_encrypt,
-           'phone'=>$phone_encrypt
+           'phone'=>$phone_encrypt,
+           'profile_img'=>$data['profile_img']
        );
 
        return $encryptedData;
@@ -185,6 +186,7 @@ public function decryptDataRow($data)
         $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($data->last_name);
 		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($data->company);
         $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($data->phone);
+        $arr['profile_img'] = $data->profile_img;
     return $arr;
 }
 
@@ -961,7 +963,8 @@ public function update_user()
             'first_name'=>'required',
             'last_name'=>'required',
             'company'=>'required',
-            'phone'=>'required'
+            'phone'=>'required',
+            'profile_img'=>'required'
         ];
     
         if(!$this->validate($rules))
@@ -986,7 +989,8 @@ public function update_user()
             'first_name'=>trim($json_data->first_name),
             'last_name'=>trim($json_data->last_name),
             'company'=>trim($json_data->company),
-            'phone'=>trim($json_data->phone)
+            'phone'=>trim($json_data->phone),
+            'profile_img'=>trim($json_data->profile_img)
         );
 
         $encryptedData = $this->encryptUserDataForUpdate($data);
@@ -1499,6 +1503,169 @@ public function get_user_profile_img()
 
 }
 
+
+public function create_user()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
+        $checkTimeoutStatus = true;
+        if(!$byPass)
+        {
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+        }
+        
+        if(!$checkTimeoutStatus)
+        {
+            return redirect()->to($logoutUrl);
+        }
+
+        $rules = [
+            'username'=>'required',
+            'email'=>'required|valid_email',
+            'address_1'=>'required',
+            'address_2'=>'required',
+            'company'=>'required',
+            'state'=>'required',
+            'city'=>'required',
+            'user_type'=>'required',
+            'lender_status'=>'required'
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['message'] = $this->validator->getErrors();
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
+        }
+    
+        $json_data = $this->request->getJSON();
+
+        $data = array(
+            'uid'=>$this->generateUserId(),
+            'ip_address'=>$this->request->getIPAddress(),
+            'username'=>trim($json_data->username),
+            'email'=>trim($json_data->email),
+            'password'=>password_hash("12345",PASSWORD_DEFAULT),
+            'company'=>trim($json_data->company),
+            'created_on'=>time(),
+            'created_by'=>$uid,
+            'active'=>1,
+            'address_1'=>trim($json_data->address_1),
+            'address_2'=>trim($json_data->address_2),
+            'state'=>trim($json_data->state),
+            'city'=>trim($json_data->city),
+            'user_type'=>trim($json_data->user_type),
+            'lender_status'=>trim($json_data->lender_status)
+        );
+
+        // $encryptedData = $this->encryptUserDataForUpdate($data);
+
+        // $status = $this->userlibrary->checkCreatedUserExistsInDatabase($data['email']);
+        $userResponse = $this->userlibrary->createUser($data);
+        // print_r($status);
+        // die;
+        if($userResponse['response'])
+        {
+            // $encryptedData = $this->encryptUserData($data);
+            // $encryptedData = $this->userlibrary->encryptRowForSpecificColumns((object)$data,['username','email']);
+            // print_r($encryptedData);die;
+            // $this->usermodel->registerUser($encryptedData);
+            
+            $response['message'] = "User created successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+        }
+        else
+        {
+            $response['message'] = $userResponse['message'];
+            $response['code'] = $userResponse['code'];
+            $response['response'] = $userResponse['response'];
+            $response['result_data'] = $userResponse['result_data'];
+            $response['return_data'] = $userResponse['return_data'];
+        }
+        
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
+    }
+
+}
 
 
 ################################ TESTING METHODS #######################

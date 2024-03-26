@@ -24,6 +24,8 @@ one token is blank it will thrown the error.
 }
 
 
+
+
 {
     "success":true,
     "status":200,
@@ -80,3 +82,10 @@ normal user - yirjohn@gmail.com
 
 
 
+{
+    "email":"rameez@gmail.com",
+    "first_name":"rameez",
+    "last_name":"khan",
+    "company":"khan companies",
+    "phone":"9980952977"
+}

@@ -49,6 +49,7 @@ $routes->post('/get_main_menu', 'UserController::get_main_menu');
 $routes->post('/get_main_menu_for_test', 'UserController::get_main_menu_for_test');
 $routes->post('/upload_user_profile_img', 'UserController::upload_user_profile_img');
 $routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
+$routes->post('/create_user', 'UserController::create_user');
 
 
 // ################## TESTING URLS ###########################

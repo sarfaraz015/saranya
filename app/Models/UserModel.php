@@ -338,7 +338,21 @@ public function updateUserProfileImage($data)
         ->update($data); 
 }
 
+public function insertIntoAddressBook($data)
+{
+        $this->db->table('address_book')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
 
+public function insertIntoUserAddressMapper($data)
+{
+        $this->db->table('user_address_mapper')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
 
 
 }

@@ -637,6 +637,18 @@ public function decryptRowForSpecificColumns($data,$columns)
    return $data;
 }
 
+public function encryptRowForSpecificColumns($data,$columns)
+{
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->encryptAndStore($value);
+                }
+        }
+   return $data;
+}
+
 
 
 public function insertUserDataInProfileChangeHistory($uid)
@@ -672,6 +684,128 @@ public function insertUserDataInProfileChangeHistory($uid)
     return $rowId;
 }
 
+
+public function checkCreatedUserExistsInUsersTable($email)
+{
+    $usersResult = $this->db->table('users')
+    ->where('email',$this->dataHandler->encryptAndStore($email))    
+    ->get()
+    ->getRow();
+  
+     if($usersResult)
+     {
+         return 1;
+     }
+     else
+     {
+        return 0;
+     }
+
+}
+
+public function checkCompanyCityExists($company,$city)
+{
+        $addressBookRow = $this->db->table('address_book')
+        ->where('name',$company) 
+        ->where('city',$city)    
+        ->get()
+        ->getRow();
+        if($addressBookRow){
+            return 1;
+        }
+        else{
+            return 0;
+        }
+}
+
+public function generateStringCode()
+{
+    $finalKey = '';
+		$bytes = random_bytes(6);
+
+        $numbersKeys = bin2hex($bytes);
+		$alphabetsKeys = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		$finalKey = $numbersKeys.$alphabetsKeys;
+		$code = substr(str_shuffle($finalKey),0,6);
+	return $code;
+}
+
+public function createUser($data)
+{
+    $response = [];
+    if($this->checkCreatedUserExistsInUsersTable($data['email']))
+    {
+            $response['message'] = "User already exists in the database";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = $data;
+            return $response;    
+    }
+
+    if($this->checkCompanyCityExists($data['company'],$data['city']))
+    {
+            $response['message'] = "Company and city already exists";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = $data;
+            return $response; 
+    }
+
+    $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email']);
+    $usersTableData = [
+        'uid'=>$encryptedData->uid,
+        'ip_address'=>$encryptedData->ip_address,
+        'username'=>$encryptedData->username,
+        'email'=>$encryptedData->email,
+        'password'=>$encryptedData->password,
+        'created_on'=>$encryptedData->created_on,
+        'created_by'=>$encryptedData->created_by,
+        'company'=>$encryptedData->company,
+        'active'=>$encryptedData->active
+    ];
+    
+    $code = $this->generateStringCode();
+    $addressBookData = [
+        'code'=>$code,
+        'type_of_connect'=>$data['user_type'],
+        'name'=>$data['company'],
+        'address_1'=>$data['address_1'],
+        'address_2'=>$data['address_2'],
+        'city'=>$data['city'],
+        'state'=>$data['state'],
+        'status'=>$data['lender_status'] 
+  ];
+    
+  $userAddressMapperData = [
+    'user_id'=>$encryptedData->uid,
+    'addressbook_code'=>$code,
+];
+    
+        if($this->usermodel->registerUser($usersTableData))
+        {
+            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+            $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+            $response['message'] = "User created successfully";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+        }
+        else
+        {
+            $response['message'] = "User creation failed";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+        }
+         
+    
+    return $response;
+
+}
 
 
 
