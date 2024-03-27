@@ -941,6 +941,86 @@ public function createAuthTemplete($data)
     return $response;
 }
 
+public function decodeAuthLevel($level)
+{
+        $arr=[];
+        if($level == 0){
+            $arr['view'] = false;
+            $arr['add'] = false;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($level == 1){
+            $arr['view'] = true;
+            $arr['add'] = false;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($level == 4){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($level == 5){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = true;
+            $arr['delete'] = false;
+        }
+        else if($level == 9){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = true;
+            $arr['delete'] = true;
+        }
+
+     return $arr;
+}
+
+
+public function getUsersAuthTemplates()
+{
+     $usersAuthTemplateData = $this->usermodel->getUsersAuthTemplatesData();
+     $finalArray = [];
+     $tempCodesArray = [];
+
+    foreach($usersAuthTemplateData as $key => $value)
+    {
+        if(!in_array($value->code,$tempCodesArray))
+        {
+            $arr['id'] = $value->id;
+            $arr['code'] = $value->code;
+            $arr['name'] = $value->name;
+            $arr['remarks'] = $value->remarks;
+          
+
+            $templateList = [];
+            foreach($usersAuthTemplateData as $key2 => $value2)
+            {
+                if($value->code == $value2->code)
+                {
+                    $arr2['tl_id'] = $value2->tl_id;
+                    $arr2['tl_code'] = $value2->tl_code;
+                    $arr2['tl_template_code'] = $value2->tl_template_code;
+                    $arr2['tl_main_menu_code'] = $value2->tl_main_menu_code;
+                    $arr2['tl_sub_menu_code'] = $value2->tl_sub_menu_code;
+                    $arr2['tl_level'] = $value2->tl_level;
+                    $arr2['permissions'] = $this->decodeAuthLevel($value2->tl_level);
+                    array_push($templateList,$arr2);
+                }
+            }
+
+            $arr['template_list'] = $templateList;
+            array_push($tempCodesArray,$value->code);
+            array_push($finalArray,$arr);
+        }
+       
+    }
+
+    return $finalArray;
+}
+
 
 
 // ######################## TESTING METHODS ######################

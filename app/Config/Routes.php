@@ -51,7 +51,7 @@ $routes->post('/upload_user_profile_img', 'UserController::upload_user_profile_i
 $routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
 $routes->post('/create_user', 'UserController::create_user');
 $routes->post('/create_auth_templete', 'UserController::create_auth_templete');
-
+$routes->get('/get_all_users_auth_templates', 'UserController::get_all_users_auth_templates');
 
 
 // ################## TESTING URLS ###########################

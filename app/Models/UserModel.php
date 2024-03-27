@@ -371,9 +371,20 @@ public function insertUserAuthTemplateLists($data)
 public function get_users_auth_template_lists()
 {
         $result = $this->db->table('users_auth_template_lists')  
-                                        ->get()
-                                        ->getResult();
+                        ->get()
+                        ->getResult();
         return $result;                                
+}
+
+public function getUsersAuthTemplatesData()
+{
+        $templateResult = $this->db->table('users_auth_template_names')
+        ->select('users_auth_template_names.*,tl.id as tl_id,tl.code as tl_code,tl.template_code as tl_template_code,tl.main_menu_code as tl_main_menu_code,tl.sub_menu_code as tl_sub_menu_code,tl.level as tl_level,tl.created_on as tl_created_on,tl.updated_on as tl_updated_on,tl.is_deleted as tl_is_deleted,tl.created_by as tl_created_by,tl.updated_by as tl_updated_by,tl.reason_for_delete as tl_reason_for_delete')
+        ->join(' users_auth_template_lists as tl', ' users_auth_template_names.code = tl.template_code','left')  
+        ->get()
+        ->getResult(); 
+
+        return $templateResult;  
 }
 
 
