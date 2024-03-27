@@ -354,5 +354,27 @@ public function insertIntoUserAddressMapper($data)
         return $insertedID; 
 }
 
+public function insertUserAuthTemplateNames($data)
+{
+        $this->db->table('users_auth_template_names')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;   
+}
+
+public function insertUserAuthTemplateLists($data)
+{
+        $this->db->table('users_auth_template_lists')
+                 ->insertBatch($data);
+}
+
+public function get_users_auth_template_lists()
+{
+        $result = $this->db->table('users_auth_template_lists')  
+                                        ->get()
+                                        ->getResult();
+        return $result;                                
+}
+
 
 }

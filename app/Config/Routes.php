@@ -50,9 +50,13 @@ $routes->post('/get_main_menu_for_test', 'UserController::get_main_menu_for_test
 $routes->post('/upload_user_profile_img', 'UserController::upload_user_profile_img');
 $routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
 $routes->post('/create_user', 'UserController::create_user');
+$routes->post('/create_auth_templete', 'UserController::create_auth_templete');
+
 
 
 // ################## TESTING URLS ###########################
+
+$routes->get('/get_users_auth_template_list_test', 'UserController::get_users_auth_template_list_test');
 
 $routes->get('/testBaseUrl', 'TestController::testBaseUrl');
 

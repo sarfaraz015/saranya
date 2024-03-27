@@ -753,12 +753,15 @@ public function createUser($data)
             return $response; 
     }
 
-    $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email']);
+    $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
     $usersTableData = [
         'uid'=>$encryptedData->uid,
         'ip_address'=>$encryptedData->ip_address,
+        'first_name'=>$encryptedData->first_name,
+        'last_name'=>$encryptedData->last_name,
         'username'=>$encryptedData->username,
         'email'=>$encryptedData->email,
+        'phone'=>$encryptedData->phone,
         'password'=>$encryptedData->password,
         'created_on'=>$encryptedData->created_on,
         'created_by'=>$encryptedData->created_by,
@@ -767,6 +770,7 @@ public function createUser($data)
     ];
     
     $code = $this->generateStringCode();
+    $codeForUserAddressMapper = $this->generateStringCode();
     $addressBookData = [
         'code'=>$code,
         'type_of_connect'=>$data['user_type'],
@@ -775,12 +779,15 @@ public function createUser($data)
         'address_2'=>$data['address_2'],
         'city'=>$data['city'],
         'state'=>$data['state'],
+        'created_by'=>$encryptedData->created_by,
         'status'=>$data['lender_status'] 
   ];
     
   $userAddressMapperData = [
+    'code'=>$codeForUserAddressMapper,
     'user_id'=>$encryptedData->uid,
     'addressbook_code'=>$code,
+    'created_by'=>$encryptedData->created_by
 ];
     
         if($this->usermodel->registerUser($usersTableData))
@@ -788,8 +795,8 @@ public function createUser($data)
             $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
             $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
             $response['message'] = "User created successfully";
-            $response['code'] = 401;
-            $response['response'] = false;
+            $response['code'] = 200;
+            $response['response'] = true;
             $response['result_data'] = [];
             $response['return_data'] = [];
         }
@@ -802,9 +809,136 @@ public function createUser($data)
             $response['return_data'] = [];
         }
          
-    
     return $response;
+}
 
+// Working method Not in use
+public function setAuthLevelTest($permissions)
+{
+    $arr = [];
+    foreach($permissions as $key => $value)
+    {      
+            if(!is_array($value))
+            {
+                if($value->view==true && $value->add==true && $value->update==true && $value->delete==true)
+                {
+                    $arr[$key] = 9;
+                }
+                else if($value->view==true && $value->add==true && $value->update==true)
+                {
+                    $arr[$key] = 5;
+                }
+                else if($value->view==true && $value->add==true)
+                {
+                    $arr[$key] = 4;
+                }
+                else if($value->view==true)
+                {
+                    $arr[$key] = 1;
+                }
+                else
+                {
+                    $arr[$key] = 0;
+                }
+            }
+    }
+
+     print_r($arr);
+
+}
+
+public function setAuthLevel($row)
+{      
+    $level = '';
+    if($row->view==true && $row->add==true && $row->update==true && $row->delete==true)
+    {
+        $level = 9;
+    }
+    else if($row->view==true && $row->add==true && $row->update==true)
+    {
+        $level = 5;
+    }
+    else if($row->view==true && $row->add==true)
+    {
+        $level = 4;
+    }
+    else if($row->view==true)
+    {
+        $level = 1;
+    }
+    else
+    {
+        $level = 0;
+    }
+
+    return $level;
+}
+
+public function createAuthTemplete($data)
+{
+    $response = [];
+    $usersAuthTemplateNamesCode = $this->generateStringCode();
+    $usersAuthTemplateNames = [
+        'code'=>$usersAuthTemplateNamesCode,
+        'name'=>$data['template_name'],
+        'remarks'=>$data['remarks'],
+        'created_by'=>$data['login_user_id']
+    ];
+
+    $permissions = $data['permissions'];
+
+    $finalusersAuthTemplateListsArray = [];
+    foreach($permissions as $mainMenuCode => $value)
+    {
+        $arr=[];
+    
+        if(is_array($value))
+        {
+            $arr=[];
+            foreach($value as $key2 => $value2){
+                foreach($value2 as $key3 => $value3){
+                        $arr['code'] = $this->generateStringCode();
+                        $arr['template_code'] = $usersAuthTemplateNamesCode;
+                        $arr['main_menu_code'] = $mainMenuCode;
+                        $arr['sub_menu_code'] = $key3;
+                        $arr['level'] = 9;
+                        $arr['created_by'] = $data['login_user_id'];
+                        $arr['level'] = $this->setAuthLevel($value3);
+                        array_push($finalusersAuthTemplateListsArray,$arr);
+                }
+            }
+        }
+        else
+        {
+            $arr['code'] = $this->generateStringCode();
+            $arr['template_code'] = $usersAuthTemplateNamesCode;
+            $arr['main_menu_code'] = $mainMenuCode;
+            $arr['sub_menu_code'] = "blank";
+            $arr['level'] = 9;
+            $arr['created_by'] = $data['login_user_id'];
+            $arr['level'] = $this->setAuthLevel($value);
+            array_push($finalusersAuthTemplateListsArray,$arr);
+        }
+    }
+    $rowId = $this->usermodel->insertUserAuthTemplateNames($usersAuthTemplateNames);
+    if($rowId)
+    {
+        $response['message'] = "User template created successfully lib";
+        $response['code'] = 200;
+        $response['response'] = true;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        $this->usermodel->insertUserAuthTemplateLists($finalusersAuthTemplateListsArray);
+    }
+    else
+    {
+        $response['message'] = "User template creation failed";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    return $response;
 }
 
 

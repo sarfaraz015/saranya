@@ -89,3 +89,33 @@ normal user - yirjohn@gmail.com
     "company":"khan companies",
     "phone":"9980952977"
 }
+
+
+#########################################
+
+
+ {
+    // users_auth_template_names : Need to add below 2 item in this table and collect
+    // the code
+    "template_name":"sample",
+    "remarks":"This templete is for test",
+
+    // users_auth_template_lists :
+    #  Add template_code to users_auth_template_lists along with below data (column -3)
+
+    "permissions":{
+        # add the key name (hdg93r) to the column number 4(main_menu_code)
+        "hdg93r": {"view": true,"add": true, "update": false, "delete": false},
+        "sdfs4wgw": {"view": false,"add": false, "update": false, "delete": false},
+        "sdfwgw": {"view": true,"add": true, "update": true, "delete": false},
+        "iiooii": {"view": false,"add": false, "update": false, "delete": false},
+        "sdfs4w": {"view": false,"add": false, "update": false, "delete": false},
+        "rsrstey":  [
+            {"dfrfwe": {"view": true,"add": true, "update": true, "delete": true}},
+            {"lloopp": {"view": true,"add": true, "update": true, "delete": true}}
+            ] ,
+        "yuyuop": {"view": true,"add": true, "update": true, "delete": true}
+            
+    }
+    
+}

@@ -1588,7 +1588,8 @@ public function create_user()
         }
 
         $rules = [
-            'username'=>'required',
+            'first_name'=>'required',
+            'last_name'=>'required',
             'email'=>'required|valid_email',
             'address_1'=>'required',
             'address_2'=>'required',
@@ -1596,7 +1597,8 @@ public function create_user()
             'state'=>'required',
             'city'=>'required',
             'user_type'=>'required',
-            'lender_status'=>'required'
+            'lender_status'=>'required',
+            'phone'=>'required'
         ];
     
         if(!$this->validate($rules))
@@ -1617,7 +1619,9 @@ public function create_user()
         $data = array(
             'uid'=>$this->generateUserId(),
             'ip_address'=>$this->request->getIPAddress(),
-            'username'=>trim($json_data->username),
+            'first_name'=>trim($json_data->first_name),
+            'last_name'=>trim($json_data->last_name),
+            'username'=>trim($json_data->first_name).' '.trim($json_data->last_name),
             'email'=>trim($json_data->email),
             'password'=>password_hash("12345",PASSWORD_DEFAULT),
             'company'=>trim($json_data->company),
@@ -1629,23 +1633,152 @@ public function create_user()
             'state'=>trim($json_data->state),
             'city'=>trim($json_data->city),
             'user_type'=>trim($json_data->user_type),
-            'lender_status'=>trim($json_data->lender_status)
+            'lender_status'=>trim($json_data->lender_status),
+            'phone'=>trim($json_data->phone)
         );
-
-        // $encryptedData = $this->encryptUserDataForUpdate($data);
-
-        // $status = $this->userlibrary->checkCreatedUserExistsInDatabase($data['email']);
+        
         $userResponse = $this->userlibrary->createUser($data);
-        // print_r($status);
-        // die;
         if($userResponse['response'])
         {
-            // $encryptedData = $this->encryptUserData($data);
-            // $encryptedData = $this->userlibrary->encryptRowForSpecificColumns((object)$data,['username','email']);
-            // print_r($encryptedData);die;
-            // $this->usermodel->registerUser($encryptedData);
-            
             $response['message'] = "User created successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+        }
+        else
+        {
+            $response['message'] = $userResponse['message'];
+            $response['code'] = $userResponse['code'];
+            $response['response'] = $userResponse['response'];
+            $response['result_data'] = $userResponse['result_data'];
+            unset($userResponse['return_data']['password']);
+            $response['return_data'] = $userResponse['return_data'];
+        }
+        
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
+    }
+
+}
+
+
+public function create_auth_templete()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
+        $checkTimeoutStatus = true;
+        if(!$byPass)
+        {
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+        }
+        
+        if(!$checkTimeoutStatus)
+        {
+            return redirect()->to($logoutUrl);
+        }
+
+        $rules = [
+            'template_name'=>'required',
+            'remarks'=>'required',
+            'permissions'=>'required',
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['message'] = $this->validator->getErrors();
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
+        }
+    
+        $json_data = $this->request->getJSON();
+
+        $data = array(
+            'login_user_id'=>$uid,
+            'template_name'=>$json_data->template_name,
+            'remarks'=>$json_data->remarks,
+            'permissions'=>$json_data->permissions
+        );
+        
+        $userResponse = $this->userlibrary->createAuthTemplete($data);
+        if($userResponse['response'])
+        {
+            $response['message'] = "User template created successfully";
             $response['code'] = 200;
             $response['response'] = true;
             $response['result_data'] = [];
@@ -1668,8 +1801,65 @@ public function create_user()
 }
 
 
+
 ################################ TESTING METHODS #######################
 
+// Working code 
+public function decodeAuthLevel($data)
+{
+    $finalArray = [];
+    foreach($data as $key => $value)
+    {
+        $arr=[];
+        if($value->level == 0){
+            $arr['view'] = false;
+            $arr['add'] = false;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($value->level == 1){
+            $arr['view'] = true;
+            $arr['add'] = false;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($value->level == 4){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = false;
+            $arr['delete'] = false;
+        }
+        else if($value->level == 5){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = true;
+            $arr['delete'] = false;
+        }
+        else if($value->level == 9){
+            $arr['view'] = true;
+            $arr['add'] = true;
+            $arr['update'] = true;
+            $arr['delete'] = true;
+        }
+
+        $value = (array)$value;
+        $value['permissions'] = $arr;
+        $value = (object)$value;
+        array_push($finalArray,$value);
+    }
+
+    echo json_encode($finalArray);
+    die;
+
+}
+
+public function get_users_auth_template_list_test()
+{
+    // echo "get_users_auth_template_list_test";die;
+    $result = $this->usermodel->get_users_auth_template_lists();
+    $this->decodeAuthLevel($result);
+    die;
+}
 
 public function get_main_menu_for_test()
 {
