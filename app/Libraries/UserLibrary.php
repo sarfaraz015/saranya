@@ -391,6 +391,7 @@ public function decryptDataResult($data)
         $arr['id'] = $value->id;
         $arr['uid'] = $value->uid;
 		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
+        $arr['username'] = $this->dataHandler->retrieveAndDecrypt($value->username);
         $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
         $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
 		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
@@ -812,6 +813,86 @@ public function createUser($data)
     return $response;
 }
 
+
+
+public function updateUser($data,$userId)
+{
+        $response = [];
+        $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
+       
+        $usersTableData = [
+            'uid'=>$userId,
+            'username'=>$encryptedData->username,
+            'phone'=>$encryptedData->phone,
+            'updated_by'=>$encryptedData->updated_by,
+            'company'=>$encryptedData->company
+        ];
+
+        $code = $this->generateStringCode();
+        $codeForUserAddressMapper = $this->generateStringCode();
+
+        $addressBookData = [
+            'code'=>$code,
+            'type_of_connect'=>"blank",
+            'name'=>$data['company'],
+            'address_1'=>$data['address_1'],
+            'address_2'=>$data['address_2'],
+            'city'=>$data['city'],
+            'state'=>$data['state'],
+            'updated_by'=>$encryptedData->updated_by,
+            'status'=>'blank' 
+      ];
+
+      $addressBookDataToUpdate = [
+        'name'=>$data['company'],
+        'address_1'=>$data['address_1'],
+        'address_2'=>$data['address_2'],
+        'city'=>$data['city'],
+        'state'=>$data['state'],
+        'updated_by'=>$encryptedData->updated_by
+  ];
+
+      $userAddressMapperData = [
+        'code'=>$codeForUserAddressMapper,
+        'user_id'=>$userId,
+        'addressbook_code'=>$code,
+        'updated_by'=>$encryptedData->updated_by
+    ];
+
+        if($this->usermodel->checkUserExistsInUserAddressMapper($userId))
+        {
+            // UPADTE DATA
+            $addressBookCode = $this->usermodel->getAddressBookCode($userId); 
+            $this->insertUserDataInProfileChangeHistory($userId);
+            $this->usermodel->updateUserData($usersTableData);
+            $this->usermodel->updateIntoAddressBook($addressBookDataToUpdate,$addressBookCode); 
+            $response['response'] = true;
+        }
+        else 
+        {
+            // INSERT DATA 
+            if($this->checkCompanyCityExists($data['company'],$data['city']))
+            {
+                    $response['message'] = "Company and city already exists";
+                    $response['code'] = 401;
+                    $response['response'] = false;
+                    $response['result_data'] = [];
+                    $response['return_data'] = $data;
+                    return $response; 
+            }
+            $this->insertUserDataInProfileChangeHistory($userId);
+            $this->usermodel->updateUserData($usersTableData);
+            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+            $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+            $response['response'] = true;
+        }
+
+     return $response;   
+
+}
+
+
+
 // Working method Not in use
 public function setAuthLevelTest($permissions)
 {
@@ -1004,7 +1085,9 @@ public function getUsersAuthTemplates()
                     $arr2['tl_code'] = $value2->tl_code;
                     $arr2['tl_template_code'] = $value2->tl_template_code;
                     $arr2['tl_main_menu_code'] = $value2->tl_main_menu_code;
+                    $arr2['tl_main_menu_name'] = $value2->tl_main_menu_name;
                     $arr2['tl_sub_menu_code'] = $value2->tl_sub_menu_code;
+                    $arr2['tl_sub_menu_name'] = $value2->tl_sub_menu_name;
                     $arr2['tl_level'] = $value2->tl_level;
                     $arr2['permissions'] = $this->decodeAuthLevel($value2->tl_level);
                     array_push($templateList,$arr2);
@@ -1021,6 +1104,191 @@ public function getUsersAuthTemplates()
     return $finalArray;
 }
 
+
+public function getMainManuDataAuth($uid)
+{
+    $usersResult = $this->db->table('users')
+                    ->where('uid',$uid)    
+                    ->get()
+                    ->getRow();
+   
+    $menuMainModulesResult = '';
+    // if($usersResult->initial_auth_level == 9)
+    // {
+        $menuMainModulesResult = $this->db->table('menu_main_modules')
+                                            ->select('menu_main_modules.*,sm.id as sub_id,sm.code as sub_code,sm.menu_main_code as sub_menu_main_code,sm.name as sub_name,sm.description as sub_description,sm.icon_name as sub_icon_name,sm.order_no as sub_order_no,sm.created_on as sub_created_on,sm.updated_on as sub_updated_on,sm.is_deleted as sub_is_deleted')
+                                            ->join(' menu_sub_modules as sm', ' menu_main_modules.code = sm.menu_main_code','left')  
+                                            ->orderBy('menu_main_modules.order_no')
+                                            ->get()
+                                            ->getResult();  
+                                                                
+        $mainMenuCodeArray = [];
+        foreach($menuMainModulesResult as $key => $value)
+        {
+                array_push($mainMenuCodeArray,$value->code);
+        }
+        
+        $mainMenuCodeArrayFiltered = array_unique($mainMenuCodeArray);
+
+        $mainMenuArray = [];
+        $tempIdArray = [];
+        foreach($mainMenuCodeArrayFiltered as $key => $main_menu_code)
+        {
+            foreach($menuMainModulesResult as $key2 => $value2)
+            {
+                    if($main_menu_code == $value2->code){
+                         
+                        if(!in_array($main_menu_code,$tempIdArray))
+                        {
+                            $arr['id'] = $value2->id;
+                            $arr['code'] = $value2->code;
+                            $arr['name'] = $value2->name;
+                            $arr['description'] = $value2->description;
+                            $arr['icon_name'] = $value2->icon_name;
+                            $arr['link'] = $value2->link;
+                            $arr['order_no'] = $value2->order_no;
+                            $arr['created_by'] = $value2->created_by;
+                            $arr['updated_by'] = $value2->updated_by;
+                            $arr['created_on'] = $value2->created_on;
+                            $arr['updated_on'] = $value2->updated_on;
+                            $arr['is_deleted'] = $value2->is_deleted;
+                            
+
+                            $subMenuArray = [];
+                            foreach($menuMainModulesResult as $key3 => $value3)
+                            {
+                                    if($main_menu_code == $value3->sub_menu_main_code)
+                                    {
+                                           $arr2['sub_id'] = $value3->sub_id;
+                                           $arr2['sub_code'] = $value3->sub_code;
+                                           $arr2['sub_menu_main_code'] = $value3->sub_menu_main_code;
+                                           $arr2['sub_name'] = $value3->sub_name;
+                                           $arr2['sub_description'] = $value3->sub_description;
+                                           $arr2['sub_icon_name'] = $value3->sub_icon_name;
+                                           $arr2['sub_order_no'] = $value3->sub_order_no;
+                                           $arr2['sub_created_on'] = $value3->sub_created_on;
+                                           $arr2['sub_updated_on'] = $value3->sub_updated_on;
+                                           $arr2['sub_is_deleted'] = $value3->sub_is_deleted;
+                                           array_push($subMenuArray,$arr2);
+                                    }
+                            }
+
+                            $arr['sub_menu'] = $subMenuArray;
+                            array_push($mainMenuArray,$arr);
+                            array_push($tempIdArray,$main_menu_code);
+
+                        }
+                           
+                    }
+            }  
+        }
+
+        $menuMainModulesResult = $mainMenuArray; 
+    // }
+    // else
+    // {
+    //     $usersAuthResult = $this->db->table('menu_user_auths') 
+    //                                 ->where('user_id',$uid)  
+    //                                 ->get()
+    //                                 ->getRow(); 
+    //     $mainMenuCode =  $usersAuthResult->main_menu_code;  
+        
+    //     $menuMainModulesResult = $this->db->table('menu_main_modules') 
+    //                                         ->where('code',$mainMenuCode) 
+    //                                         ->orderBy('menu_main_modules.order_no')
+    //                                         ->get()
+    //                                         ->getResult();
+    // } 
+    
+    // die;
+    return $menuMainModulesResult;
+}
+
+
+public function decryptResultForSpecificColumns($data,$columnsArray)
+{
+     foreach($data as $key => $userObj){
+        foreach($userObj as $field => $value2){
+            if(in_array($field,$columnsArray)){
+                 $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+            }
+        }
+     }
+
+    return $data;
+}
+
+public function getSpecificColumnsFromResult($data,$columnsArray)
+{
+     foreach($data as $key => $value){
+        foreach($value as $key2 => $value2){
+                if(!in_array($key2,$columnsArray)){
+                      unset($value->$key2);
+                }
+        }
+     }
+    return $data;
+}
+
+public function getUsersList()
+{
+    $usersData = $this->usermodel->getUsersListsData();
+    $decryptedData = $this->decryptResultForSpecificColumns($usersData,['first_name','last_name','email','phone']);
+    $finalData = $this->getSpecificColumnsFromResult($decryptedData,['id','uid','first_name','last_name','email']);
+    return $finalData;
+}
+
+public function getallTemplatesList()
+{
+    $templateData = $this->usermodel->getTemplatesListData();
+    $finalData = $this->getSpecificColumnsFromResult($templateData,['id','code','name']);
+    return $finalData;
+}
+
+public function getSingleTemplate($data)
+{
+    $usersAuthTemplateData = $this->usermodel->getSingleTemplateData($data['template_code']);
+
+    $finalArray = [];
+    $tempCodesArray = [];
+
+   foreach($usersAuthTemplateData as $key => $value)
+   {
+       if(!in_array($value->code,$tempCodesArray))
+       {
+           $arr['id'] = $value->id;
+           $arr['code'] = $value->code;
+           $arr['name'] = $value->name;
+           $arr['remarks'] = $value->remarks;
+         
+
+           $templateList = [];
+           foreach($usersAuthTemplateData as $key2 => $value2)
+           {
+               if($value->code == $value2->code)
+               {
+                   $arr2['tl_id'] = $value2->tl_id;
+                   $arr2['tl_code'] = $value2->tl_code;
+                   $arr2['tl_template_code'] = $value2->tl_template_code;
+                   $arr2['tl_main_menu_code'] = $value2->tl_main_menu_code;
+                   $arr2['tl_main_menu_name'] = $value2->tl_main_menu_name;
+                   $arr2['tl_sub_menu_code'] = $value2->tl_sub_menu_code;
+                   $arr2['tl_sub_menu_name'] = $value2->tl_sub_menu_name;
+                   $arr2['tl_level'] = $value2->tl_level;
+                   $arr2['permissions'] = $this->decodeAuthLevel($value2->tl_level);
+                   array_push($templateList,$arr2);
+               }
+           }
+
+           $arr['template_list'] = $templateList;
+           array_push($tempCodesArray,$value->code);
+           array_push($finalArray,$arr);
+       }
+      
+   }
+
+   return $finalArray;
+}
 
 
 // ######################## TESTING METHODS ######################

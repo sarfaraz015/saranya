@@ -379,13 +379,79 @@ public function get_users_auth_template_lists()
 public function getUsersAuthTemplatesData()
 {
         $templateResult = $this->db->table('users_auth_template_names')
-        ->select('users_auth_template_names.*,tl.id as tl_id,tl.code as tl_code,tl.template_code as tl_template_code,tl.main_menu_code as tl_main_menu_code,tl.sub_menu_code as tl_sub_menu_code,tl.level as tl_level,tl.created_on as tl_created_on,tl.updated_on as tl_updated_on,tl.is_deleted as tl_is_deleted,tl.created_by as tl_created_by,tl.updated_by as tl_updated_by,tl.reason_for_delete as tl_reason_for_delete')
-        ->join(' users_auth_template_lists as tl', ' users_auth_template_names.code = tl.template_code','left')  
+        ->select('users_auth_template_names.*,tl.id as tl_id,tl.code as tl_code,tl.template_code as tl_template_code,tl.main_menu_code as tl_main_menu_code,tl.sub_menu_code as tl_sub_menu_code,tl.level as tl_level,tl.created_on as tl_created_on,tl.updated_on as tl_updated_on,tl.is_deleted as tl_is_deleted,tl.created_by as tl_created_by,tl.updated_by as tl_updated_by,tl.reason_for_delete as tl_reason_for_delete,mm.name as tl_main_menu_name,ms.name as tl_sub_menu_name')
+        ->join(' users_auth_template_lists as tl', ' users_auth_template_names.code = tl.template_code','left') 
+        ->join(' menu_main_modules as mm', ' tl.main_menu_code = mm.code','left') 
+        ->join(' menu_sub_modules as ms', ' tl.sub_menu_code = ms.code','left') 
         ->get()
         ->getResult(); 
 
         return $templateResult;  
 }
+
+public function getUsersListsData()
+{
+        $result = $this->db->table('users')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+
+public function getTemplatesListData()
+{
+        $result = $this->db->table('users_auth_template_names')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function getSingleTemplateData($templateCode)
+{
+        $templateResult = $this->db->table('users_auth_template_names')
+        ->select('users_auth_template_names.*,tl.id as tl_id,tl.code as tl_code,tl.template_code as tl_template_code,tl.main_menu_code as tl_main_menu_code,tl.sub_menu_code as tl_sub_menu_code,tl.level as tl_level,tl.created_on as tl_created_on,tl.updated_on as tl_updated_on,tl.is_deleted as tl_is_deleted,tl.created_by as tl_created_by,tl.updated_by as tl_updated_by,tl.reason_for_delete as tl_reason_for_delete,mm.name as tl_main_menu_name,ms.name as tl_sub_menu_name')
+        ->join(' users_auth_template_lists as tl', ' users_auth_template_names.code = tl.template_code','left') 
+        ->join(' menu_main_modules as mm', ' tl.main_menu_code = mm.code','left') 
+        ->join(' menu_sub_modules as ms', ' tl.sub_menu_code = ms.code','left') 
+        ->where('users_auth_template_names.code',$templateCode)
+        ->get()
+        ->getResult(); 
+
+        return $templateResult; 
+}
+
+public function checkUserExistsInUserAddressMapper($user_id)
+{
+        $result = $this->db->table('user_address_mapper') 
+                        ->where('user_id',$user_id)
+                        ->get()
+                        ->getRow(); 
+        if($result)
+        {
+             return 1;   
+        }    
+        else
+        {
+              return 0;    
+        }
+}
+
+public function updateIntoAddressBook($data,$addressBookCode)
+{
+        $this->db->table('address_book')
+        ->where('code',$addressBookCode)
+        ->update($data); 
+}
+
+public function getAddressBookCode($userId)
+{
+        $result = $this->db->table('user_address_mapper') 
+        ->where('user_id',$userId)
+        ->get()
+        ->getRow();
+        return $result->addressbook_code;
+}
+
 
 
 }

@@ -52,6 +52,11 @@ $routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
 $routes->post('/create_user', 'UserController::create_user');
 $routes->post('/create_auth_templete', 'UserController::create_auth_templete');
 $routes->get('/get_all_users_auth_templates', 'UserController::get_all_users_auth_templates');
+$routes->post('/get_main_menu_auth', 'UserController::get_main_menu_auth');
+$routes->get('/get_users_list', 'UserController::get_users_list');
+$routes->get('/get_templates_list', 'UserController::get_templates_list');
+$routes->post('/get_template', 'UserController::get_template');
+
 
 
 // ################## TESTING URLS ###########################
