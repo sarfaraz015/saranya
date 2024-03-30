@@ -3,6 +3,7 @@
 use CodeIgniter\Router\RouteCollection;
 use App\Controllers\UserController;
 use App\Controllers\TestController;
+use App\Controllers\ApiController;
 
 /**
  * @var RouteCollection $routes
@@ -56,6 +57,19 @@ $routes->post('/get_main_menu_auth', 'UserController::get_main_menu_auth');
 $routes->get('/get_users_list', 'UserController::get_users_list');
 $routes->get('/get_templates_list', 'UserController::get_templates_list');
 $routes->post('/get_template', 'UserController::get_template');
+$routes->post('/save_user_menu_authentication', 'UserController::save_user_menu_authentication');
+$routes->get('/get_active_users', 'UserController::get_active_users');
+
+
+// #################### ApiController ###################
+
+$routes->get('/testApiController', 'ApiController::testApiController');
+$routes->post('/create_api', 'ApiController::create_api');
+$routes->post('/get_all_apis', 'ApiController::get_all_apis');
+$routes->post('/update_api', 'ApiController::update_api');
+$routes->get('/get_address_book_list', 'ApiController::get_address_book_list');
+$routes->get('/get_api_request_type_list', 'ApiController::get_api_request_type_list');
+
 
 
 

@@ -453,5 +453,53 @@ public function getAddressBookCode($userId)
 }
 
 
+public function insertMenuUserAuths($data)
+{
+        $this->db->table('menu_user_auths')
+        ->insertBatch($data);   
+        return true;  
+}
+
+public function getActiveUsersCount()
+{
+        $q = "SELECT count(*) FROM users WHERE `active`=1";
+        $query = $this->db->query($q);
+        $arr = (array)$query->getRow();
+        $count = $arr['count(*)'];
+        return $count;
+}
+
+public function insertApiUrlEndPoints($data)
+{
+        $this->db->table('api_url_endpoints')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
+
+public function updateApiUrlEndPoints($code,$data)
+{
+        $this->db->table('api_url_endpoints')
+        ->where('code',$code)
+        ->update($data); 
+        return true;
+}
+
+public function getAddressBookListData()
+{
+        $result = $this->db->table('address_book')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function getApiRequestTypeListData()
+{
+        $result = $this->db->table('api_request_type')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
 
 }

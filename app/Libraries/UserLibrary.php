@@ -1291,6 +1291,135 @@ public function getSingleTemplate($data)
 }
 
 
+public function saveUserMenuAuthentication($data)
+{
+    $response = [];
+    $menuUserAuthCode = $this->generateStringCode();
+    $permissions = $data['permissions'];
+
+    $finalMenuUserAuthsArray = [];
+    foreach($permissions as $mainMenuCode => $value)
+    {
+        $arr=[];
+    
+        if(is_array($value))
+        {
+            $arr=[];
+            foreach($value as $key2 => $value2){
+                foreach($value2 as $key3 => $value3){
+                        $arr['code'] = $this->generateStringCode();
+                        $arr['user_id'] = $data['user_id'];
+                        $arr['main_menu_code'] = $mainMenuCode;
+                        $arr['sub_menu_code'] = $key3;
+                        $arr['created_by'] = $data['login_user_id'];
+                        $arr['updated_by'] = $data['login_user_id'];
+                        $arr['level'] = $this->setAuthLevel($value3);
+                        array_push($finalMenuUserAuthsArray,$arr);
+                }
+            }
+        }
+        else
+        {
+            $arr['code'] = $this->generateStringCode();
+            $arr['user_id'] = $data['user_id'];
+            $arr['main_menu_code'] = $mainMenuCode;
+            $arr['sub_menu_code'] = "blank";
+            $arr['created_by'] = $data['login_user_id'];
+            $arr['updated_by'] = $data['login_user_id'];
+            $arr['level'] = $this->setAuthLevel($value);
+            array_push($finalMenuUserAuthsArray,$arr);
+        }
+    }
+
+       if($this->usermodel->insertMenuUserAuths($finalMenuUserAuthsArray))
+       {
+            $response['message'] = "User auth permisssions set successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+       }
+       else
+       {
+            $response['message'] = "User auth permisssions failed";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+       }
+    
+   
+       return $response;
+  
+}
+
+public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNumber)
+{
+    $query = $this->db->table('api_url_endpoints');
+    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $searchCriteria[0]->key);
+    foreach ($searchCriteria as $index => $criteria) {
+        if($index!=0)
+        {
+            $key = $criteria->key;
+            $columnName = $criteria->column_name;
+            $type = $criteria->type;
+            $operator = $criteria->operator;
+
+            if($operator == 'like'){
+                $query->like($columnName, $key);
+            }
+    
+            if($operator!='like'){
+                switch ($searchCriteria[$index-1]->type) {
+                    case 'and':
+                        $query->where($columnName.$operator, $key);
+                        break;
+                    case 'or':
+                        $query->orWhere($columnName.$operator, $key);
+                        break;
+                    case 'end':
+                        break;
+                    default:
+                        break;
+                }
+            }
+            
+
+
+        }
+    }
+
+        $offset = ($paginationNumber - 1) * $numberOfRecords;
+        $query->limit($numberOfRecords, $offset);
+        $result = $query->get()->getResult();
+        return $result;
+}
+
+public function getStandardRecordsFromApiUrlEndpoints($numberOfRecords, $paginationNumber)
+{
+    $query = $this->db->table('api_url_endpoints');
+    $offset = ($paginationNumber - 1) * $numberOfRecords;
+    $query->limit($numberOfRecords, $offset);
+    $result = $query->get()->getResult();
+    return $result;
+}
+
+
+public function getAddressBookList()
+{
+    $templateData = $this->usermodel->getAddressBookListData();
+    $finalData = $this->getSpecificColumnsFromResult($templateData,['id','code','name']);
+    return $finalData;
+}
+
+public function getApiRequestTypeList()
+{
+    $templateData = $this->usermodel->getApiRequestTypeListData();
+    $finalData = $this->getSpecificColumnsFromResult($templateData,['id','code','api_request_type']);
+    return $finalData;
+}
+
+
 // ######################## TESTING METHODS ######################
 
 public function testerTokenVerification($testerTokenEmailHeader,$testerTokenAuthorizationHeader)
