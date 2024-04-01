@@ -1291,67 +1291,174 @@ public function getSingleTemplate($data)
 }
 
 
+// Working method but only insertion of records
+// public function saveUserMenuAuthentication($data)
+// {
+//     $response = [];
+//     $menuUserAuthCode = $this->generateStringCode();
+//     $permissions = $data['permissions'];
+
+//     $finalMenuUserAuthsArray = [];
+//     foreach($permissions as $mainMenuCode => $value)
+//     {
+//         $arr=[];
+    
+//         if(is_array($value))
+//         {
+//             $arr=[];
+//             foreach($value as $key2 => $value2){
+//                 foreach($value2 as $key3 => $value3){
+//                         $arr['code'] = $this->generateStringCode();
+//                         $arr['user_id'] = $data['user_id'];
+//                         $arr['main_menu_code'] = $mainMenuCode;
+//                         $arr['sub_menu_code'] = $key3;
+//                         $arr['created_by'] = $data['login_user_id'];
+//                         $arr['updated_by'] = $data['login_user_id'];
+//                         $arr['level'] = $this->setAuthLevel($value3);
+//                         array_push($finalMenuUserAuthsArray,$arr);
+//                 }
+//             }
+//         }
+//         else
+//         {
+//             $arr['code'] = $this->generateStringCode();
+//             $arr['user_id'] = $data['user_id'];
+//             $arr['main_menu_code'] = $mainMenuCode;
+//             $arr['sub_menu_code'] = null;
+//             $arr['created_by'] = $data['login_user_id'];
+//             $arr['updated_by'] = $data['login_user_id'];
+//             $arr['level'] = $this->setAuthLevel($value);
+//             array_push($finalMenuUserAuthsArray,$arr);
+//         }
+//     }
+
+//        if($this->usermodel->insertMenuUserAuths($finalMenuUserAuthsArray))
+//        {
+//             $response['message'] = "User auth permisssions set successfully";
+//             $response['code'] = 200;
+//             $response['response'] = true;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//        }
+//        else
+//        {
+//             $response['message'] = "User auth permisssions failed";
+//             $response['code'] = 401;
+//             $response['response'] = false;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//        }
+    
+   
+//        return $response;
+  
+// }
+
+
+// Need to update
 public function saveUserMenuAuthentication($data)
 {
     $response = [];
-    $menuUserAuthCode = $this->generateStringCode();
+    $user_id = $data['user_id'];
     $permissions = $data['permissions'];
 
-    $finalMenuUserAuthsArray = [];
+    // print_r($permissions);die;
+
+    $menuUserAuthsData = $this->usermodel->getMenuUserAuthsById($user_id);
+
+    $mainMenuCodeArray = [];
+    $subMenuCodeArray = [];
+
+      foreach($menuUserAuthsData as $key => $value)
+      {
+            // print_r($value);
+            if($value->sub_menu_code!=''){
+                array_push($subMenuCodeArray,$value->sub_menu_code);
+            }
+            array_push($mainMenuCodeArray,$value->main_menu_code);
+      }
+
+      $mainMenuCodeFilteredArray = array_unique($mainMenuCodeArray);
+      $subMenuCodeFilteredArray = array_unique($subMenuCodeArray);
+    
+    //   print_r($subMenuCodeFilteredArray);
+
+    $updateDataArray = [];
+    $insertDataArray = [];
+
     foreach($permissions as $mainMenuCode => $value)
     {
-        $arr=[];
-    
-        if(is_array($value))
-        {
-            $arr=[];
-            foreach($value as $key2 => $value2){
-                foreach($value2 as $key3 => $value3){
-                        $arr['code'] = $this->generateStringCode();
-                        $arr['user_id'] = $data['user_id'];
-                        $arr['main_menu_code'] = $mainMenuCode;
-                        $arr['sub_menu_code'] = $key3;
-                        $arr['created_by'] = $data['login_user_id'];
-                        $arr['updated_by'] = $data['login_user_id'];
-                        $arr['level'] = $this->setAuthLevel($value3);
-                        array_push($finalMenuUserAuthsArray,$arr);
-                }
+        $arr = [];
+        //   print_r($value);
+         if(!is_array($value))
+         {
+            if(in_array($mainMenuCode,$mainMenuCodeFilteredArray))
+            {
+                 $arr['user_id'] = $user_id;
+                 $arr['main_menu_code'] = $mainMenuCode;
+                 $arr['sub_menu_code'] = null;
+                 $arr['level'] = $this->setAuthLevel($value);
+                 $arr['updated_by'] = $data['login_user_id'];
+                 array_push($updateDataArray,$arr);
             }
-        }
-        else
-        {
-            $arr['code'] = $this->generateStringCode();
-            $arr['user_id'] = $data['user_id'];
-            $arr['main_menu_code'] = $mainMenuCode;
-            $arr['sub_menu_code'] = "blank";
-            $arr['created_by'] = $data['login_user_id'];
-            $arr['updated_by'] = $data['login_user_id'];
-            $arr['level'] = $this->setAuthLevel($value);
-            array_push($finalMenuUserAuthsArray,$arr);
-        }
+            else
+            {
+                $arr['code'] = $this->generateStringCode();
+                $arr['user_id'] = $data['user_id'];
+                $arr['main_menu_code'] = $mainMenuCode;
+                $arr['sub_menu_code'] = null;
+                $arr['created_by'] = $data['login_user_id'];
+                $arr['updated_by'] = $data['login_user_id'];
+                $arr['level'] = $this->setAuthLevel($value);
+                array_push($insertDataArray,$arr);
+            }
+         }
+         else
+         {
+            // If there is submenu
+            //    print_r($value);
+                foreach($value as $key2 =>$value2)
+                {
+                    //   print_r($value2);
+                    foreach($value2 as $subMenuCode => $value3)
+                    {
+                        //  print_r($subMenuCode);
+                            if(in_array($subMenuCode,$subMenuCodeFilteredArray))
+                            {
+                                $arr['user_id'] = $user_id;
+                                $arr['main_menu_code'] = $mainMenuCode;
+                                $arr['sub_menu_code'] = $subMenuCode;
+                                $arr['level'] = $this->setAuthLevel($value3);
+                                $arr['updated_by'] = $data['login_user_id'];
+                                array_push($updateDataArray,$arr);   
+                            }
+                            else
+                            {
+                                $arr['code'] = $this->generateStringCode();
+                                $arr['user_id'] = $data['user_id'];
+                                $arr['main_menu_code'] = $mainMenuCode;
+                                $arr['sub_menu_code'] = $subMenuCode;
+                                $arr['created_by'] = $data['login_user_id'];
+                                $arr['updated_by'] = $data['login_user_id'];
+                                $arr['level'] = $this->setAuthLevel($value3);
+                                array_push($insertDataArray,$arr);
+                            }
+                    }
+                }
+               
+         }
+          
+
     }
 
-       if($this->usermodel->insertMenuUserAuths($finalMenuUserAuthsArray))
-       {
-            $response['message'] = "User auth permisssions set successfully";
-            $response['code'] = 200;
-            $response['response'] = true;
-            $response['result_data'] = [];
-            $response['return_data'] = [];
-       }
-       else
-       {
-            $response['message'] = "User auth permisssions failed";
-            $response['code'] = 401;
-            $response['response'] = false;
-            $response['result_data'] = [];
-            $response['return_data'] = [];
-       }
-    
-   
-       return $response;
+    // print_r($insertDataArray);
+    // print_r($updateDataArray);
+    $this->usermodel->setMenuUserAuthsPermissions($insertDataArray,$updateDataArray);
+
+    die;
   
 }
+
 
 public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNumber)
 {

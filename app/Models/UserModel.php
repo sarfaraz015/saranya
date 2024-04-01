@@ -501,5 +501,49 @@ public function getApiRequestTypeListData()
         return $result; 
 }
 
+public function getMenuUserAuthsById($user_id)
+{
+        $result = $this->db->table('menu_user_auths')  
+        ->where('user_id',$user_id)
+        ->get()
+        ->getResult();
+
+        // print_r($result);die;
+        return $result; 
+}
+
+public function setMenuUserAuthsPermissions($insertData,$updateData)
+{
+
+        //  print_r($insertData);
+        if(!empty($insertData))
+        {
+                // print_r($insertData);
+                $this->db->table('menu_user_auths')
+                ->insertBatch($insertData);              
+        }
+
+        if(!empty($updateData))
+        {
+        //        print_r($updateData);die; 
+        }
+
+
+
+        // print_r($insertData);
+        // $arr = [];
+        // print_r(!empty($arr));
+        // if(empty($arr)) 
+        // {
+        //     echo "is empty";
+        // }
+        // else
+        // {
+        //         echo "Not empty!!!!";
+        // }
+
+}       
+
+
 
 }

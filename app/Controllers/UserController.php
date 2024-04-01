@@ -1213,23 +1213,6 @@ public function generate_tester_token()
 
 public function get_all_users()
 {
-    $rules = [
-        'number_of_records'=>'required',
-        'pagination_number'=>'required'
-    ];
-    
-    if(!$this->validate($rules))
-    {
-        $response['message'] = $this->validator->getErrors();
-        $response['response'] = false;
-        $response['code'] = 401;
-        $response['result_data'] = [];
-        $response['return_data'] = [];
-
-        $finalResponse = $this->userlibrary->generateResponse($response);
-        return $this->response->setJSON($finalResponse);
-    }
-
     $byPass = false;
     $tester_token = '';
     $finalResponse = '';
@@ -1274,6 +1257,28 @@ public function get_all_users()
               {
                   $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
               }
+
+              if(!$checkTimeoutStatus)
+              {
+                return redirect()->to($logoutUrl);
+              }
+
+              $rules = [
+                'number_of_records'=>'required',
+                'pagination_number'=>'required'
+            ];
+            
+            if(!$this->validate($rules))
+            {
+                $response['message'] = $this->validator->getErrors();
+                $response['response'] = false;
+                $response['code'] = 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+        
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            }
             
             $json_data = $this->request->getJSON();
             $number_of_records = $json_data->number_of_records;
@@ -1286,10 +1291,7 @@ public function get_all_users()
             else{
                 $result = $this->userlibrary->getStandardRecords($number_of_records,$pagination_number);
             }
-              if(!$checkTimeoutStatus)
-              {
-                return redirect()->to($logoutUrl);
-              }
+             
               $decryptedUserData = $this->decryptDataResult($result);
               $response['message']= "All users details";
               $response['result_data']= $decryptedUserData;
