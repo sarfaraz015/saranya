@@ -612,14 +612,14 @@ public function getMainManuData($uid)
         $usersAuthResult = $this->db->table('menu_user_auths') 
                                     ->where('user_id',$uid)  
                                     ->get()
-                                    ->getRow(); 
-        $mainMenuCode =  $usersAuthResult->main_menu_code;  
-        
+                                    ->getResult();   
+        $mainMenuCodeArray = array_column($usersAuthResult, 'main_menu_code');
+     
         $menuMainModulesResult = $this->db->table('menu_main_modules') 
-                                            ->where('code',$mainMenuCode) 
+                                            ->whereIn('code',$mainMenuCodeArray) 
                                             ->orderBy('menu_main_modules.order_no')
                                             ->get()
-                                            ->getResult();
+                                            ->getResult();                                    
     } 
     
     return $menuMainModulesResult;
@@ -731,6 +731,78 @@ public function generateStringCode()
 	return $code;
 }
 
+public function setDefaultMenuUserAuthsPermissions($user_id)
+{
+     $response = [];
+     $defaultMainMenuData = $this->usermodel->getDefaultMenuMainModules();
+
+     $finalArray = [];
+     foreach($defaultMainMenuData as $key => $value)
+     {
+          $arr = [];
+          $arr['code'] = $this->generateStringCode();
+          $arr['user_id'] = $user_id;
+          $arr['main_menu_code'] = $value->code;
+          $arr['sub_menu_code'] = null;   
+          $arr['level'] = 9;  
+          $arr['created_by'] = $user_id; 
+          $arr['updated_by'] = $user_id; 
+          array_push($finalArray,$arr);
+     }
+
+      $status = $this->usermodel->insertMenuUserAuths($finalArray);
+         
+      if($status)
+      {
+            $response['response'] = true;
+      }
+      else
+      {
+            $response['message'] = "Something went wrong with deafault permissions";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = []; 
+      }
+    return $response;
+}
+
+public function setDefaultMenuUserAuthsPermissionsForCreateUser($user_id,$create_by)
+{
+     $response = [];
+     $defaultMainMenuData = $this->usermodel->getDefaultMenuMainModules();
+
+     $finalArray = [];
+     foreach($defaultMainMenuData as $key => $value)
+     {
+          $arr = [];
+          $arr['code'] = $this->generateStringCode();
+          $arr['user_id'] = $user_id;
+          $arr['main_menu_code'] = $value->code;
+          $arr['sub_menu_code'] = null;   
+          $arr['level'] = 9;  
+          $arr['created_by'] = $create_by; 
+          $arr['updated_by'] = $create_by; 
+          array_push($finalArray,$arr);
+     }
+
+      $status = $this->usermodel->insertMenuUserAuths($finalArray);
+         
+      if($status)
+      {
+            $response['response'] = true;
+      }
+      else
+      {
+            $response['message'] = "Something went wrong with deafault permissions";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = []; 
+      }
+    return $response;
+}
+
 public function createUser($data)
 {
     $response = [];
@@ -795,6 +867,7 @@ public function createUser($data)
         {
             $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
             $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+            $this->setDefaultMenuUserAuthsPermissionsForCreateUser($encryptedData->uid,$encryptedData->created_by);
             $response['message'] = "User created successfully";
             $response['code'] = 200;
             $response['response'] = true;
@@ -1292,7 +1365,7 @@ public function getSingleTemplate($data)
 
 
 // Working method but only insertion of records
-// public function saveUserMenuAuthentication($data)
+// public function saveUserMenuAuthentication_xxxxx($data)
 // {
 //     $response = [];
 //     $menuUserAuthCode = $this->generateStringCode();
@@ -1355,14 +1428,12 @@ public function getSingleTemplate($data)
 // }
 
 
-// Need to update
+// Working method : 
 public function saveUserMenuAuthentication($data)
 {
     $response = [];
     $user_id = $data['user_id'];
     $permissions = $data['permissions'];
-
-    // print_r($permissions);die;
 
     $menuUserAuthsData = $this->usermodel->getMenuUserAuthsById($user_id);
 
@@ -1371,7 +1442,6 @@ public function saveUserMenuAuthentication($data)
 
       foreach($menuUserAuthsData as $key => $value)
       {
-            // print_r($value);
             if($value->sub_menu_code!=''){
                 array_push($subMenuCodeArray,$value->sub_menu_code);
             }
@@ -1381,15 +1451,12 @@ public function saveUserMenuAuthentication($data)
       $mainMenuCodeFilteredArray = array_unique($mainMenuCodeArray);
       $subMenuCodeFilteredArray = array_unique($subMenuCodeArray);
     
-    //   print_r($subMenuCodeFilteredArray);
-
     $updateDataArray = [];
     $insertDataArray = [];
 
     foreach($permissions as $mainMenuCode => $value)
     {
         $arr = [];
-        //   print_r($value);
          if(!is_array($value))
          {
             if(in_array($mainMenuCode,$mainMenuCodeFilteredArray))
@@ -1415,14 +1482,10 @@ public function saveUserMenuAuthentication($data)
          }
          else
          {
-            // If there is submenu
-            //    print_r($value);
                 foreach($value as $key2 =>$value2)
                 {
-                    //   print_r($value2);
                     foreach($value2 as $subMenuCode => $value3)
                     {
-                        //  print_r($subMenuCode);
                             if(in_array($subMenuCode,$subMenuCodeFilteredArray))
                             {
                                 $arr['user_id'] = $user_id;
@@ -1451,12 +1514,26 @@ public function saveUserMenuAuthentication($data)
 
     }
 
-    // print_r($insertDataArray);
-    // print_r($updateDataArray);
-    $this->usermodel->setMenuUserAuthsPermissions($insertDataArray,$updateDataArray);
+    $status = $this->usermodel->setMenuUserAuthsPermissions($insertDataArray,$updateDataArray);
 
-    die;
-  
+       if($status)
+       {
+            $response['message'] = "User auth permisssions set successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+       }
+       else
+       {
+            $response['message'] = "User auth permisssions failed";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+       }
+
+       return $response;
 }
 
 
@@ -1525,6 +1602,22 @@ public function getApiRequestTypeList()
     $finalData = $this->getSpecificColumnsFromResult($templateData,['id','code','api_request_type']);
     return $finalData;
 }
+
+
+public function getApiById($code)
+{
+    $apiData = $this->usermodel->getApiByIdData($code);
+    return $apiData;
+}
+
+
+public function deleteApi($code)
+{
+    $apiData = $this->usermodel->deleteApiData($code);
+    return $apiData;
+}
+
+
 
 
 // ######################## TESTING METHODS ######################

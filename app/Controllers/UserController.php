@@ -320,15 +320,29 @@ public function register()
                
                 if($this->usermodel->registerUser($encryptedData))
                 {
-                    $response['message'] = "User registered successfully";
-                    $response['response'] = true;
-                    $response['code'] = 200;
-                    $response['result_data'] = [];
-                    $response['return_data'] = []; 
+                    $setDefaultResponse = $this->userlibrary->setDefaultMenuUserAuthsPermissions($uid);
+                    if($setDefaultResponse['response'])
+                    {
+                        $response['message'] = "User registered successfully";
+                        $response['response'] = true;
+                        $response['code'] = 200;
+                        $response['result_data'] = [];
+                        $response['return_data'] = []; 
+                    }
+                    else
+                    {
+                        $response['message'] = $setDefaultResponse['message'];
+                        $response['response'] = $setDefaultResponse['response'];
+                        $response['code'] = $setDefaultResponse['code'];
+                        $response['result_data'] = $setDefaultResponse['result_data'];
+                        $response['return_data'] = $setDefaultResponse['return_data']; 
+                    }
+                  
                 }
             }
             else
             {
+                    // $uid = "162375";
                     $response['message'] = "User already exists in the database";
                     $response['response'] = false;
                     $response['code'] = 401;
@@ -2833,6 +2847,8 @@ public function get_active_users()
     return $this->response->setJSON($finalResponse);
 
 }
+
+
 
 
 

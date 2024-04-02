@@ -501,48 +501,100 @@ public function getApiRequestTypeListData()
         return $result; 
 }
 
+
+
 public function getMenuUserAuthsById($user_id)
 {
         $result = $this->db->table('menu_user_auths')  
         ->where('user_id',$user_id)
         ->get()
         ->getResult();
-
-        // print_r($result);die;
         return $result; 
 }
 
+public function updateMutipleRecordsForMenuUserAuths($data)
+{
+        foreach($data as $key => $value)
+        {
+                $dataToUpdate = [];
+                $dataToUpdate['level'] = $value['level'];
+                $dataToUpdate['updated_by'] = $value['updated_by'];
+
+                $query = $this->db->table('menu_user_auths');
+                $query->where('user_id',$value['user_id']);
+                $query->where('main_menu_code',$value['main_menu_code']);
+                $query->where('sub_menu_code',$value['sub_menu_code']==''?'':$value['sub_menu_code']);
+                $query->update($dataToUpdate); 
+                // $sql = $query->getCompiledSelect();
+                // print_r($sql);
+        }
+
+      return true;  
+}
+
+
 public function setMenuUserAuthsPermissions($insertData,$updateData)
 {
-
-        //  print_r($insertData);
         if(!empty($insertData))
         {
-                // print_r($insertData);
                 $this->db->table('menu_user_auths')
                 ->insertBatch($insertData);              
         }
 
         if(!empty($updateData))
         {
-        //        print_r($updateData);die; 
+            $this->updateMutipleRecordsForMenuUserAuths($updateData);
         }
 
-
-
-        // print_r($insertData);
-        // $arr = [];
-        // print_r(!empty($arr));
-        // if(empty($arr)) 
-        // {
-        //     echo "is empty";
-        // }
-        // else
-        // {
-        //         echo "Not empty!!!!";
-        // }
-
+        return true;
 }       
+
+
+public function getDefaultMenuMainModules()
+{
+        $links = ['dashboardDefault.html', 'defaultusersettings.html'];
+        $result = $this->db->table('menu_main_modules') 
+        ->whereIn('link', $links)
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function getApiByIdData($code)
+{
+        $result = $this->db->table('api_url_endpoints') 
+        ->where('code',$code) 
+        ->get()
+        ->getRow();
+        return $result; 
+}
+
+public function deleteApiData($code)
+{
+        $this->db->table('api_url_endpoints')
+        ->where('code',$code)
+        ->update(['is_deleted'=>1]); 
+        return true;
+}
+
+
+public function getTotalApiCount()
+{
+        $q = "SELECT count(*) FROM api_url_endpoints";
+        $query = $this->db->query($q);
+        $arr = (array)$query->getRow();
+        $count = $arr['count(*)'];
+        return $count;
+}
+
+public function getDepreciatedApiCount()
+{
+        $q = "SELECT count(*) FROM api_url_endpoints where is_deleted=1";
+        $query = $this->db->query($q);
+        $arr = (array)$query->getRow();
+        $count = $arr['count(*)'];
+        return $count;
+}
 
 
 

@@ -69,6 +69,10 @@ $routes->post('/get_all_apis', 'ApiController::get_all_apis');
 $routes->post('/update_api', 'ApiController::update_api');
 $routes->get('/get_address_book_list', 'ApiController::get_address_book_list');
 $routes->get('/get_api_request_type_list', 'ApiController::get_api_request_type_list');
+$routes->post('/get_api_by_id', 'ApiController::get_api_by_id');
+$routes->post('/delete_api', 'ApiController::delete_api');
+$routes->get('/total_api_count', 'ApiController::total_api_count');
+$routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_api_count');
 
 
 
