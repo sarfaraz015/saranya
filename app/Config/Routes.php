@@ -60,6 +60,13 @@ $routes->post('/get_template', 'UserController::get_template');
 $routes->post('/save_user_menu_authentication', 'UserController::save_user_menu_authentication');
 $routes->get('/get_active_users', 'UserController::get_active_users');
 
+$routes->get('/get_all_visual_metrics', 'UserController::get_all_visual_metrics');
+$routes->post('/update_user_analyticals', 'UserController::update_user_analyticals');
+$routes->post('/get_user_analytical_view', 'UserController::get_user_analytical_view');
+
+
+
+
 
 // #################### ApiController ###################
 

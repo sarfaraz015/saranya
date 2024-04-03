@@ -596,6 +596,54 @@ public function getDepreciatedApiCount()
         return $count;
 }
 
+public function getVisualMetricData()
+{
+        $result = $this->db->table('visual_metrics') 
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
+{
+        $data = array(
+                'login_user_id'=>$email,
+                'ip_address'=>$ipAddress,
+                'browser_details'=>$userAgent,
+                'is_success'=>$isSuccess
+        );
+
+        $query = $this->db->table('login_attempts_history');
+        return $query->insert($data);
+}
+
+
+public function insertVisualMetricsMenuModules($data)
+{
+        $this->db->table('visual_metrics_menu_modules')
+        ->insertBatch($data);
+        return true;
+}
+
+
+public function getVisualMetricsMenuModulesData($data)
+{
+        $result = $this->db->table(' visual_metrics_menu_modules') 
+        ->where('user_id',$data['user_id'])
+        ->where('menu_code',$data['menu_code'])
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function getVisualMetricsData($visualCodeArray)
+{
+        $result = $this->db->table('visual_metrics') 
+        ->whereIn('code', $visualCodeArray)
+        ->get()
+        ->getResult();
+        return $result; 
+}
 
 
 }

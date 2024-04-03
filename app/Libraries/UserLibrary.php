@@ -1618,6 +1618,70 @@ public function deleteApi($code)
 }
 
 
+public function getVisualMetric()
+{
+    $visualMetricData = $this->usermodel->getVisualMetricData();
+    foreach($visualMetricData as $key => $value)
+    {
+            $value->data_set = json_decode($value->data_set);
+    }
+    return $visualMetricData;
+}
+
+
+public function updateUserAnalytics($inputData,$data)
+{
+    $response = [];
+    $finalArray = [];
+    foreach($inputData as $key => $value)
+    {
+        $arr = [];
+        $arr['code'] = $this->generateStringCode();
+        $arr['user_id'] = $value->user_id;
+        $arr['menu_code'] = $value->menu_code;
+        $arr['visual_code'] = $value->analytical_code;
+        $arr['created_by'] = $data['login_user_id'];
+        $arr['updated_by'] = $data['login_user_id'];
+        $arr['is_enabled'] = $value->status;
+        array_push($finalArray,$arr);
+    }
+
+    if($this->usermodel->insertVisualMetricsMenuModules($finalArray))
+    {
+        $response['response'] = true;
+    }
+    else
+    {
+        $response['message'] = "Error in updating user analyticals";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
+    return $response;
+
+}
+
+public function getUserAnalyticalView($data)
+{
+     $visualMetricMenuModulesData = $this->usermodel->getVisualMetricsMenuModulesData($data);
+    $visualCodeArray = array_column($visualMetricMenuModulesData,'visual_code');
+    $visualMetricsData = $this->usermodel->getVisualMetricsData($visualCodeArray);
+  
+     foreach($visualMetricMenuModulesData as $key => $value)
+     {
+            foreach($visualMetricsData as $key2 => $value2){
+                if($value->visual_code == $value2->code){
+                    $value->data_set = json_decode($value2->data_set);
+                }
+            }
+           
+     }
+
+   return $visualMetricMenuModulesData;
+}
+
 
 
 // ######################## TESTING METHODS ######################
