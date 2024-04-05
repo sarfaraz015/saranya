@@ -23,6 +23,84 @@ public function __construct()
     $this->tester = new Tester();
 }
 
+
+// ####################### ENCRYPTION AND DECRYPTION FUNCTIONS ###################
+
+// Not dynamic 
+public function decryptDataRow($data)
+{
+        $arr['id'] = $data->id;
+        $arr['uid'] = $data->uid;
+		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($data->email);
+        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($data->first_name);
+        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($data->last_name);
+		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($data->company);
+        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($data->phone);
+    return $arr;
+}
+
+// Not dynamic
+public function decryptDataResult($data)
+{
+      $finalArray = [];
+       foreach($data as $key => $value){
+        $arr['id'] = $value->id;
+        $arr['uid'] = $value->uid;
+		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
+        $arr['username'] = $this->dataHandler->retrieveAndDecrypt($value->username);
+        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
+        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
+		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
+        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($value->phone);
+        array_push($finalArray,$arr);
+       }
+
+      return $finalArray;
+}
+
+
+
+public function encryptRowForSpecificColumns($data,$columns)
+{
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->encryptAndStore($value);
+                }
+        }
+   return $data;
+}
+
+public function decryptRowForSpecificColumns($data,$columns)
+{
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->retrieveAndDecrypt($value);
+                }
+        }
+   return $data;
+}
+
+public function decryptResultForSpecificColumns($data,$columnsArray)
+{
+     foreach($data as $key => $userObj){
+        foreach($userObj as $field => $value2){
+            if(in_array($field,$columnsArray)){
+                 $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+            }
+        }
+     }
+
+    return $data;
+}
+
+
+
+// ######################### END OF ENCRYPTION AND DECRYPTION FUNCTIONS ################
+
 public function checkUserAlreadyExists($email)
 {
 	$q = "SELECT * FROM users WHERE `email` ='{$this->dataHandler->encryptAndStore($email)}'";
@@ -371,38 +449,6 @@ public function generateResponse($data)
 }
 
 
-public function decryptDataRow($data)
-{
-        $arr['id'] = $data->id;
-        $arr['uid'] = $data->uid;
-		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($data->email);
-        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($data->first_name);
-        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($data->last_name);
-		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($data->company);
-        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($data->phone);
-    return $arr;
-}
-
-
-public function decryptDataResult($data)
-{
-      $finalArray = [];
-       foreach($data as $key => $value){
-        $arr['id'] = $value->id;
-        $arr['uid'] = $value->uid;
-		$arr['email'] = $this->dataHandler->retrieveAndDecrypt($value->email);
-        $arr['username'] = $this->dataHandler->retrieveAndDecrypt($value->username);
-        $arr['first_name'] = $this->dataHandler->retrieveAndDecrypt($value->first_name);
-        $arr['last_name'] = $this->dataHandler->retrieveAndDecrypt($value->last_name);
-		$arr['company'] = $this->dataHandler->retrieveAndDecrypt($value->company);
-        $arr['phone'] = $this->dataHandler->retrieveAndDecrypt($value->phone);
-        array_push($finalArray,$arr);
-       }
-
-      return $finalArray;
-}
-
-
 // Working method :  Not in use
 
 // public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
@@ -537,9 +583,11 @@ public function getMainManuData($uid)
     $menuMainModulesResult = '';
     if($usersResult->initial_auth_level == 9)
     {
+        // Auth 9 User (Superadmin)
         $menuMainModulesResult = $this->db->table('menu_main_modules')
                                             ->select('menu_main_modules.*,sm.id as sub_id,sm.code as sub_code,sm.menu_main_code as sub_menu_main_code,sm.name as sub_name,sm.description as sub_description,sm.icon_name as sub_icon_name,sm.order_no as sub_order_no,sm.created_on as sub_created_on,sm.updated_on as sub_updated_on,sm.is_deleted as sub_is_deleted')
                                             ->join(' menu_sub_modules as sm', ' menu_main_modules.code = sm.menu_main_code','left')  
+                                            ->where('menu_main_modules.is_deleted',0)
                                             ->orderBy('menu_main_modules.order_no')
                                             ->get()
                                             ->getResult();  
@@ -609,45 +657,33 @@ public function getMainManuData($uid)
     }
     else
     {
+        // Auth 0 user (Normal User)
         $usersAuthResult = $this->db->table('menu_user_auths') 
                                     ->where('user_id',$uid)  
+                                    ->where('level!=',0)
                                     ->get()
                                     ->getResult();   
         $mainMenuCodeArray = array_column($usersAuthResult, 'main_menu_code');
      
+        $defaultMenu = $this->db->table('menu_main_modules') 
+                                    ->whereIn('link',['main-dashboard.html','settings.html'])
+                                    ->get()
+                                    ->getResult(); 
+        $defaultMenuArray = array_column($defaultMenu, 'code');
+     
+
+        $finalCodeArray = array_merge($mainMenuCodeArray,$defaultMenuArray);
+        $finalCodeArrayUnique = array_unique($finalCodeArray);
+    
         $menuMainModulesResult = $this->db->table('menu_main_modules') 
-                                            ->whereIn('code',$mainMenuCodeArray) 
+                                            ->where('menu_main_modules.is_deleted',0)
+                                            ->whereIn('code',$finalCodeArrayUnique) 
                                             ->orderBy('menu_main_modules.order_no')
                                             ->get()
                                             ->getResult();                                    
     } 
     
     return $menuMainModulesResult;
-}
-
-
-public function decryptRowForSpecificColumns($data,$columns)
-{
-        foreach($data as $key => $value)
-        {
-                if(in_array($key,$columns))
-                {  
-                    $data->$key  = $this->dataHandler->retrieveAndDecrypt($value);
-                }
-        }
-   return $data;
-}
-
-public function encryptRowForSpecificColumns($data,$columns)
-{
-        foreach($data as $key => $value)
-        {
-                if(in_array($key,$columns))
-                {  
-                    $data->$key  = $this->dataHandler->encryptAndStore($value);
-                }
-        }
-   return $data;
 }
 
 
@@ -675,6 +711,7 @@ public function insertUserDataInProfileChangeHistory($uid)
     unset($decryptedUserData->ip_address);
     unset($decryptedUserData->last_login);
     unset($decryptedUserData->active);
+    unset($decryptedUserData->user_type);
     
     $userArray = (array)$decryptedUserData;
     $userArray['user_id'] = $userArray['uid'];
@@ -827,46 +864,59 @@ public function createUser($data)
     }
 
     $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
-    $usersTableData = [
-        'uid'=>$encryptedData->uid,
-        'ip_address'=>$encryptedData->ip_address,
-        'first_name'=>$encryptedData->first_name,
-        'last_name'=>$encryptedData->last_name,
-        'username'=>$encryptedData->username,
-        'email'=>$encryptedData->email,
-        'phone'=>$encryptedData->phone,
-        'password'=>$encryptedData->password,
-        'created_on'=>$encryptedData->created_on,
-        'created_by'=>$encryptedData->created_by,
-        'company'=>$encryptedData->company,
-        'active'=>$encryptedData->active
-    ];
+        $usersTableData = [
+            'uid'=>$encryptedData->uid,
+            'ip_address'=>$encryptedData->ip_address,
+            'first_name'=>$encryptedData->first_name,
+            'last_name'=>$encryptedData->last_name,
+            'username'=>$encryptedData->username,
+            'email'=>$encryptedData->email,
+            'phone'=>$encryptedData->phone,
+            'password'=>$encryptedData->password,
+            'created_on'=>$encryptedData->created_on,
+            'created_by'=>$encryptedData->created_by,
+            'company'=>$encryptedData->company,
+            'active'=>$encryptedData->active
+        ];
     
-    $code = $this->generateStringCode();
-    $codeForUserAddressMapper = $this->generateStringCode();
-    $addressBookData = [
-        'code'=>$code,
-        'type_of_connect'=>$data['user_type'],
-        'name'=>$data['company'],
-        'address_1'=>$data['address_1'],
-        'address_2'=>$data['address_2'],
-        'city'=>$data['city'],
-        'state'=>$data['state'],
-        'created_by'=>$encryptedData->created_by,
-        'status'=>$data['lender_status'] 
-  ];
+        $addressBookCode = $this->generateStringCode();
+        $userAddressMapperCode = $this->generateStringCode();
+        $userAddressBookConnectCode = $this->generateStringCode();
+
+            $addressBookData = [
+                'code'=>$addressBookCode,
+                'type_of_connect'=>$data['user_type'],
+                'name'=>$data['company'],
+                'address_1'=>$data['address_1'],
+                'address_2'=>$data['address_2'],
+                'city'=>$data['city'],
+                'state'=>$data['state'],
+                'created_by'=>$encryptedData->created_by,
+                'status'=>$data['lender_status'] 
+        ];
     
-  $userAddressMapperData = [
-    'code'=>$codeForUserAddressMapper,
-    'user_id'=>$encryptedData->uid,
-    'addressbook_code'=>$code,
-    'created_by'=>$encryptedData->created_by
-];
+        $userAddressMapperData = [
+            'code'=>$userAddressMapperCode,
+            'user_id'=>$encryptedData->uid,
+            'addressbook_code'=>$addressBookCode,
+            'created_by'=>$encryptedData->created_by,
+            'updated_by'=>$encryptedData->created_by
+        ];
+
+        $userAddressBookConnectData = [
+            'code'=>$userAddressBookConnectCode,
+            'address_code'=>$addressBookCode,
+            'email'=>$data['email'],
+            'phone'=>$data['phone'],
+            'created_by'=>$encryptedData->created_by,
+            'updated_by'=>$encryptedData->created_by
+        ];
     
-        if($this->usermodel->registerUser($usersTableData))
+        if($this->usermodel->registerUserData($usersTableData))
         {
             $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
             $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($userAddressBookConnectData);
             $this->setDefaultMenuUserAuthsPermissionsForCreateUser($encryptedData->uid,$encryptedData->created_by);
             $response['message'] = "User created successfully";
             $response['code'] = 200;
@@ -888,6 +938,86 @@ public function createUser($data)
 
 
 
+// Not in use
+// public function updateUser($data,$userId)
+// {
+//         $response = [];
+//         $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
+       
+//         $usersTableData = [
+//             'uid'=>$userId,
+//             'username'=>$encryptedData->username,
+//             'phone'=>$encryptedData->phone,
+//             'updated_by'=>$encryptedData->updated_by,
+//             'company'=>$encryptedData->company,
+//             // 'profile_img'=> preg_replace("/data:image\/jpeg;base64,/", "", $encryptedData->profile_img)
+//             'profile_img'=> $encryptedData->profile_img
+//         ];
+
+//         $userData = $this->usermodel->getUserByUid($userId);
+//         $code = $this->generateStringCode();
+//         $codeForUserAddressMapper = $this->generateStringCode();
+
+//         $addressBookData = [
+//             'code'=>$code,
+//             'type_of_connect'=>$userData->user_type,
+//             'name'=>$data['company'],
+//             'address_1'=>$data['address_1'],
+//             'address_2'=>$data['address_2'],
+//             'city'=>$data['city'],
+//             'state'=>$data['state'],
+//             'updated_by'=>$encryptedData->updated_by,
+//             'status'=>"" 
+//       ];
+
+//       $addressBookDataToUpdate = [
+//         'name'=>$data['company'],
+//         'address_1'=>$data['address_1'],
+//         'address_2'=>$data['address_2'],
+//         'city'=>$data['city'],
+//         'state'=>$data['state'],
+//         'updated_by'=>$encryptedData->updated_by
+//   ];
+
+//       $userAddressMapperData = [
+//         'code'=>$codeForUserAddressMapper,
+//         'user_id'=>$userId,
+//         'addressbook_code'=>$code,
+//         'updated_by'=>$encryptedData->updated_by
+//     ];
+
+//         if($this->usermodel->checkUserExistsInUserAddressMapper($userId))
+//         {
+//             // UPADTE DATA
+//             $addressBookCode = $this->usermodel->getAddressBookCode($userId); 
+//             $this->insertUserDataInProfileChangeHistory($userId);
+//             $this->usermodel->updateUserData($usersTableData);
+//             $this->usermodel->updateIntoAddressBook($addressBookDataToUpdate,$addressBookCode); 
+//             $response['response'] = true;
+//         }
+//         else 
+//         {
+//             // INSERT DATA 
+//             if($this->checkCompanyCityExists($data['company'],$data['city']))
+//             {
+//                     $response['message'] = "Company and city already exists";
+//                     $response['code'] = 401;
+//                     $response['response'] = false;
+//                     $response['result_data'] = [];
+//                     $response['return_data'] = $data;
+//                     return $response; 
+//             }
+//             $this->insertUserDataInProfileChangeHistory($userId);
+//             $this->usermodel->updateUserData($usersTableData);
+//             $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+//             $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+//             $response['response'] = true;
+//         }
+
+//      return $response;   
+
+// }
+
 public function updateUser($data,$userId)
 {
         $response = [];
@@ -898,70 +1028,15 @@ public function updateUser($data,$userId)
             'username'=>$encryptedData->username,
             'phone'=>$encryptedData->phone,
             'updated_by'=>$encryptedData->updated_by,
-            'company'=>$encryptedData->company
+            'company'=>$encryptedData->company,
+            // 'profile_img'=> preg_replace("/data:image\/jpeg;base64,/", "", $encryptedData->profile_img)
+            'profile_img'=> $encryptedData->profile_img
         ];
 
-        $code = $this->generateStringCode();
-        $codeForUserAddressMapper = $this->generateStringCode();
-
-        $addressBookData = [
-            'code'=>$code,
-            'type_of_connect'=>"blank",
-            'name'=>$data['company'],
-            'address_1'=>$data['address_1'],
-            'address_2'=>$data['address_2'],
-            'city'=>$data['city'],
-            'state'=>$data['state'],
-            'updated_by'=>$encryptedData->updated_by,
-            'status'=>'blank' 
-      ];
-
-      $addressBookDataToUpdate = [
-        'name'=>$data['company'],
-        'address_1'=>$data['address_1'],
-        'address_2'=>$data['address_2'],
-        'city'=>$data['city'],
-        'state'=>$data['state'],
-        'updated_by'=>$encryptedData->updated_by
-  ];
-
-      $userAddressMapperData = [
-        'code'=>$codeForUserAddressMapper,
-        'user_id'=>$userId,
-        'addressbook_code'=>$code,
-        'updated_by'=>$encryptedData->updated_by
-    ];
-
-        if($this->usermodel->checkUserExistsInUserAddressMapper($userId))
-        {
-            // UPADTE DATA
-            $addressBookCode = $this->usermodel->getAddressBookCode($userId); 
             $this->insertUserDataInProfileChangeHistory($userId);
             $this->usermodel->updateUserData($usersTableData);
-            $this->usermodel->updateIntoAddressBook($addressBookDataToUpdate,$addressBookCode); 
             $response['response'] = true;
-        }
-        else 
-        {
-            // INSERT DATA 
-            if($this->checkCompanyCityExists($data['company'],$data['city']))
-            {
-                    $response['message'] = "Company and city already exists";
-                    $response['code'] = 401;
-                    $response['response'] = false;
-                    $response['result_data'] = [];
-                    $response['return_data'] = $data;
-                    return $response; 
-            }
-            $this->insertUserDataInProfileChangeHistory($userId);
-            $this->usermodel->updateUserData($usersTableData);
-            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
-            $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
-            $response['response'] = true;
-        }
-
-     return $response;   
-
+            return $response;   
 }
 
 
@@ -1067,7 +1142,7 @@ public function createAuthTemplete($data)
             $arr['code'] = $this->generateStringCode();
             $arr['template_code'] = $usersAuthTemplateNamesCode;
             $arr['main_menu_code'] = $mainMenuCode;
-            $arr['sub_menu_code'] = "blank";
+            $arr['sub_menu_code'] = null;
             $arr['level'] = 9;
             $arr['created_by'] = $data['login_user_id'];
             $arr['level'] = $this->setAuthLevel($value);
@@ -1277,19 +1352,6 @@ public function getMainManuDataAuth($uid)
     return $menuMainModulesResult;
 }
 
-
-public function decryptResultForSpecificColumns($data,$columnsArray)
-{
-     foreach($data as $key => $userObj){
-        foreach($userObj as $field => $value2){
-            if(in_array($field,$columnsArray)){
-                 $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
-            }
-        }
-     }
-
-    return $data;
-}
 
 public function getSpecificColumnsFromResult($data,$columnsArray)
 {
@@ -1574,6 +1636,7 @@ public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNu
     }
 
         $offset = ($paginationNumber - 1) * $numberOfRecords;
+        $query->where('is_deleted',0);
         $query->limit($numberOfRecords, $offset);
         $result = $query->get()->getResult();
         return $result;
@@ -1582,9 +1645,7 @@ public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNu
 public function getStandardRecordsFromApiUrlEndpoints($numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('api_url_endpoints');
-    $offset = ($paginationNumber - 1) * $numberOfRecords;
-    $query->limit($numberOfRecords, $offset);
-    $result = $query->get()->getResult();
+    $result = $query->where('is_deleted',0)->limit(6)->get()->getResult();
     return $result;
 }
 
@@ -1682,6 +1743,95 @@ public function getUserAnalyticalView($data)
    return $visualMetricMenuModulesData;
 }
 
+
+public function getMainMenuList()
+{
+    $mainMenuListData = $this->usermodel->getMainMenuListData();
+    return $mainMenuListData;
+}
+
+public function getUsersDashboard($userId)
+{
+    $mainMenuCount = $this->usermodel->getMenuMainModulesCount();
+    $menuUserAuthCount = $this->usermodel->getMenuUserAuthsCount($userId);
+    
+    $usersData = $this->usermodel->getUserByUid($userId);
+    if($usersData->initial_auth_level == 9)
+    {
+        $result = $this->getVisualMetric();
+        return $result;
+    }
+    else if($mainMenuCount == $menuUserAuthCount)
+    {
+        $result = $this->getVisualMetric();
+        return $result;
+    }
+    else
+    {
+          $decryptedData = $this->decryptRowForSpecificColumns($usersData,['username','email','first_name','last_name','company','phone']);
+          unset($decryptedData->password);
+          unset($decryptedData->activation_selector);
+          unset($decryptedData->forgotten_password_selector);
+          unset($decryptedData->forgotten_password_code);
+          unset($decryptedData->forgotten_password_time);
+          unset($decryptedData->remember_selector);
+          unset($decryptedData->remember_code);
+          unset($decryptedData->activation_code);
+      
+          $lastLoginAttemptsHistoryData = $this->usermodel->getUsersLastLoginAttemptsHistoryData($decryptedData->email);
+          $decryptedData->last_login_details = $lastLoginAttemptsHistoryData;
+          return $decryptedData;
+    }
+}
+
+
+public function registerUser($data)
+{
+            $flag = false;
+            $addressBookCode = $this->generateStringCode();
+            $userAddressMapperCode = $this->generateStringCode();
+            $userAddressBookConnectCode = $this->generateStringCode();
+
+            $addressBookData = [
+                'code'=>$addressBookCode,
+                'type_of_connect'=>$data['user_type'],
+                'name'=>$data['company'],
+                'created_by'=>$data['uid'],
+                'updated_by'=>$data['uid'],
+                'status'=>'' 
+        ];
+
+        $userAddressMapperData = [
+            'code'=>$userAddressMapperCode,
+            'user_id'=>$data['uid'],
+            'addressbook_code'=>$addressBookCode,
+            'created_by'=>$data['uid'],
+            'updated_by'=>$data['uid']
+        ];
+
+
+        $userAddressBookConnectData = [
+            'code'=>$userAddressBookConnectCode,
+            'address_code'=>$addressBookCode,
+            'email'=>$data['email'],
+            'phone'=>$data['phone'],
+            'created_by'=>$data['uid'],
+            'updated_by'=>$data['uid']
+        ];
+
+         $encryptedUserData = $this->encryptRowForSpecificColumns((object)$data,['username','email','first_name','last_name','company','phone']);
+
+         if($this->usermodel->registerUserData($encryptedUserData))
+         {
+            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+            $userAddressMapperRecordId = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
+            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($userAddressBookConnectData);
+            $flag = true;
+         }
+       
+   return $flag;
+   
+}
 
 
 // ######################## TESTING METHODS ######################

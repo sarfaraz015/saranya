@@ -27,7 +27,7 @@ public function checkUserIdExists($user_id)
         return $query->getRow();
 }
 
-public function registerUser($data)
+public function registerUserData($data)
 {
         $query = $this->db->table('users');
         return $query->insert($data);
@@ -552,7 +552,7 @@ public function setMenuUserAuthsPermissions($insertData,$updateData)
 
 public function getDefaultMenuMainModules()
 {
-        $links = ['dashboardDefault.html', 'defaultusersettings.html'];
+        $links = ['main-dashboard.html', 'settings.html'];
         $result = $this->db->table('menu_main_modules') 
         ->whereIn('link', $links)
         ->get()
@@ -644,6 +644,117 @@ public function getVisualMetricsData($visualCodeArray)
         ->getResult();
         return $result; 
 }
+
+public function getMainMenuListData()
+{
+        $result = $this->db->table('menu_main_modules') 
+                        ->select("id,code,name")
+                        ->get()
+                        ->getResult();
+        return $result; 
+}
+
+
+public function getUserByUid($userId)
+{
+        $result = $this->db->table('users') 
+        ->where('uid',$userId)
+        ->get()
+        ->getRow();
+        return $result;  
+}
+
+public function getUsersLastLoginAttemptsHistoryData($email)
+{
+        $result = $this->db->table('login_attempts_history') 
+        ->where('login_user_id ',$email)
+        ->orderBy('login_attempts_history.id','DESC')
+        ->limit(5)
+        ->get()
+        ->getResult();
+        return $result;
+}
+
+
+public function checkTableExist($table)
+{
+        $builder = $this->db->table('information_schema.tables');
+        $builder->select('table_name');
+        $builder->where('table_schema', $this->db->getDatabase());
+        $builder->where('table_type', 'BASE TABLE');
+        $query = $builder->get();
+
+        $tables = $query->getResult();
+        $tableArray = [];
+        foreach($tables as $key => $value){
+             array_push($tableArray,$value->table_name);
+        }
+
+        if(in_array($table,$tableArray)){
+                return 1;
+        }
+        else{
+                return 0;
+        }
+}
+
+
+public function getHimalayaMasterDataCount()
+{
+        $count = 0;
+        if($this->checkTableExist('raw_import_himalaya_master_data'))
+        {
+                $q = "SELECT count(*) FROM  raw_import_himalaya_master_data";
+                $query = $this->db->query($q);
+                $arr = (array)$query->getRow();
+                $count = $arr['count(*)']; 
+        }
+       
+        return $count;
+}
+
+
+
+public function getMenuMainModulesCount()
+{
+        $q = "SELECT count(*) FROM  menu_main_modules where is_deleted!=1";
+        $query = $this->db->query($q);
+        $arr = (array)$query->getRow();
+        $count = $arr['count(*)'];
+        return $count;  
+}
+
+public function getMenuUserAuthsCount($userId)
+{
+        $q = "SELECT count(*) FROM  menu_user_auths where user_id={$userId} and `level`>0";
+        $query = $this->db->query($q);
+        $arr = (array)$query->getRow();
+        $count = $arr['count(*)'];
+        return $count;   
+}
+
+
+public function getUserTypesList()
+{
+        $result = $this->db->table('user_types')
+        ->select("id,code,short_name,remarks") 
+        ->get()
+        ->getResult();
+        return $result;  
+}
+
+
+public function insertIntoUserAddressBookConnect($data)
+{
+        $this->db->table('address_book_connect')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;  
+}
+
+
+
+
 
 
 }

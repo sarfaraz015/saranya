@@ -63,8 +63,10 @@ $routes->get('/get_active_users', 'UserController::get_active_users');
 $routes->get('/get_all_visual_metrics', 'UserController::get_all_visual_metrics');
 $routes->post('/update_user_analyticals', 'UserController::update_user_analyticals');
 $routes->post('/get_user_analytical_view', 'UserController::get_user_analytical_view');
-
-
+$routes->get('/get_main_menu_list', 'UserController::get_main_menu_list');
+$routes->get('/get_user_dashboard', 'UserController::get_user_dashboard');
+$routes->get('/get_himalaya_master_data_count', 'UserController::get_himalaya_master_data_count');
+$routes->get('/get_user_types_list', 'UserController::get_user_types_list');
 
 
 

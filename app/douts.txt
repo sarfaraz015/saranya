@@ -119,3 +119,21 @@ normal user - yirjohn@gmail.com
     }
     
 }
+
+###########################
+
+{ "name":"lender",
+  "count":"50",
+  "percentage":"10.5%",
+   "scale":"-1/0/1",
+   "activity":"since last week",
+   "icon":"fas fa-rupee-sign"
+}
+
+{ "name":"Active Users",
+  "count":"50",
+  "percentage":"10.5%",
+   "scale":"-1/0/1",
+   "activity":"since last week",
+   "icon":"fas fa-rupee-sign"
+}
