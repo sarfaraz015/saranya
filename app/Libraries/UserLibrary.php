@@ -11,6 +11,7 @@ class UserLibrary{
       public $dataHandler;
 	  public $usermodel;
       public $tester;
+      public $environment;
 
 public function __construct()
 {
@@ -21,6 +22,7 @@ public function __construct()
 	$salt = $_ENV['SALT'];
 	$this->dataHandler = new SecureDataHandler($secret_key, $salt);
     $this->tester = new Tester();
+    $this->environment = $_ENV['CI_ENVIRONMENT'];
 }
 
 
@@ -60,17 +62,50 @@ public function decryptDataResult($data)
 
 
 
-public function encryptRowForSpecificColumns($data,$columns)
-{
-        foreach($data as $key => $value)
-        {
-                if(in_array($key,$columns))
-                {  
-                    $data->$key  = $this->dataHandler->encryptAndStore($value);
-                }
-        }
-   return $data;
-}
+// public function encryptRowForSpecificColumns($data,$columns)
+// {
+//         foreach($data as $key => $value)
+//         {
+//                 if(in_array($key,$columns))
+//                 {  
+//                     $data->$key  = $this->dataHandler->encryptAndStore($value);
+//                 }
+//         }
+//    return $data;
+// }
+
+
+// public function encryptRowForSpecificColumns($data,$columns)
+// {
+//     $environment = $_ENV['CI_ENVIRONMENT'];
+
+//     if($environment == 'development')
+//     {
+//         return $data;
+//     }
+//      if(is_array($data))
+//      {
+//         foreach($data as $key => $value)
+//         {
+//                 if(in_array($key,$columns))
+//                 {  
+//                     $data[$key]  = $this->dataHandler->encryptAndStore($value);
+//                 }
+//         }
+//      }
+//      else
+//      {
+//         foreach($data as $key => $value)
+//         {
+//                 if(in_array($key,$columns))
+//                 {  
+//                     $data->$key  = $this->dataHandler->encryptAndStore($value);
+//                 }
+//         }
+//      }
+      
+//    return $data;
+// }
 
 public function decryptRowForSpecificColumns($data,$columns)
 {
@@ -97,13 +132,157 @@ public function decryptResultForSpecificColumns($data,$columnsArray)
     return $data;
 }
 
+// Using method : 
+public function encryptRow($data,$columns)
+{
+    if($this->environment == 'development')
+    {
+        return $data;
+    }
+     if(is_array($data))
+     {
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data[$key]  = $this->dataHandler->encryptAndStore($value);
+                }
+        }
+     }
+     else
+     {
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->encryptAndStore($value);
+                }
+        }
+     }
+      
+   return $data;
+}
+
+public function encryptResult($data,$columnsArray)
+{
+    if($this->environment == 'development')
+    {
+        return $data;
+    }
+
+     foreach($data as $key => $userObj){
+        foreach($userObj as $field => $value2){
+            if(in_array($field,$columnsArray)){
+                 $userObj->$field = $this->dataHandler->encryptAndStore($value2);  
+            }
+        }
+     }
+
+    return $data;
+}
+
+// Using method : 
+public function encryptValue($value)
+{
+    if($this->environment=='development'){
+        return $value;
+    }
+    $value = $this->dataHandler->encryptAndStore($value);
+    return $value;
+}
+
+// Using method : 
+public function decryptValue($value)
+{
+    if($this->environment=='development'){
+        return $value;
+    }
+    $value = $this->dataHandler->retrieveAndDecrypt($value);
+    return $value;
+}
+
+// Using Method : 
+public function decryptRow($data,$columns)
+{
+    if($this->environment == 'development')
+    {
+        return $data;
+    }
+     if(is_array($data))
+     {
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data[$key]  = $this->dataHandler->retrieveAndDecrypt($value);
+                }
+        }
+     }
+     else
+     {
+        foreach($data as $key => $value)
+        {
+                if(in_array($key,$columns))
+                {  
+                    $data->$key  = $this->dataHandler->retrieveAndDecrypt($value);
+                }
+        }
+     }
+      
+   return $data;
+}
+
+
+// Old method
+// public function decryptResult($data,$columnsArray)
+// {
+//     if($this->environment == 'development')
+//     {
+//         return $data;
+//     }
+
+//      foreach($data as $key => $userObj){
+//         foreach($userObj as $field => $value2){
+//             if(in_array($field,$columnsArray)){
+//                  $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+//             }
+//         }
+//      }
+
+//     return $data;
+// }
+
+// Method in use : 
+public function decryptResult($data,$columnsArray,$flag=true)
+{
+    if($this->environment == 'development')
+    {
+        return $data;
+    }
+
+    if($flag)
+    {
+        foreach($data as $key => $userObj){
+            foreach($userObj as $field => $value2){
+                if(in_array($field,$columnsArray)){
+                     $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+                }
+            }
+         }
+         return $data;
+    }
+    else{
+        return $data;
+    }
+     
+}
 
 
 // ######################### END OF ENCRYPTION AND DECRYPTION FUNCTIONS ################
 
 public function checkUserAlreadyExists($email)
 {
-	$q = "SELECT * FROM users WHERE `email` ='{$this->dataHandler->encryptAndStore($email)}'";
+	$q = "SELECT * FROM users WHERE `email` ='{$this->encryptValue($email)}'";
 	$query = $this->db->query($q); 
 	return $query->getRow();
 }
@@ -279,7 +458,7 @@ public function checkTemperorlyBlockedUserAndActivate($email)
 
 }
 
-
+// Done with encryption
 public function storeLogs($fun,$uid=null,$token=null,$request=null,$response=null)
 {
     $logResult = [];
@@ -326,6 +505,7 @@ public function storeLogs($fun,$uid=null,$token=null,$request=null,$response=nul
     $logResult['request_size'] = $requestSize;
     $logResult['response_size'] = $responseSize;
   
+    $logResult = $this->encryptRow($logResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
 	$this->usermodel->storeUserLogHistory($logResult);
     return $logResult;
 }
@@ -491,10 +671,11 @@ public function generateResponse($data)
 
 
 // With operators : In use 
+// Done encryption
 public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('users');
-    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $this->dataHandler->encryptAndStore($searchCriteria[0]->key));
+    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $this->encryptValue($searchCriteria[0]->key));
     foreach ($searchCriteria as $index => $criteria) {
         if($index!=0)
         {
@@ -504,16 +685,16 @@ public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationN
             $operator = $criteria->operator;
 
             if($operator == 'like'){
-                $query->like($columnName, $this->dataHandler->encryptAndStore($key));
+                $query->like($columnName, $this->encryptValue($key));
             }
     
             if($operator!='like'){
                 switch ($searchCriteria[$index-1]->type) {
                     case 'and':
-                        $query->where($columnName.$operator, $this->dataHandler->encryptAndStore($key));
+                        $query->where($columnName.$operator, $this->encryptValue($key));
                         break;
                     case 'or':
-                        $query->orWhere($columnName.$operator, $this->dataHandler->encryptAndStore($key));
+                        $query->orWhere($columnName.$operator, $this->encryptValue($key));
                         break;
                     case 'end':
                         break;
@@ -533,7 +714,7 @@ public function getFilteredUsers($searchCriteria, $numberOfRecords, $paginationN
     return $result;
 }
 
-
+// Done encryption
 public function getStandardRecords($numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('users');
@@ -1819,18 +2000,32 @@ public function registerUser($data)
             'updated_by'=>$data['uid']
         ];
 
-         $encryptedUserData = $this->encryptRowForSpecificColumns((object)$data,['username','email','first_name','last_name','company','phone']);
-
+         
+         $encryptedUserData = $this->encryptRow($data,['username','email','first_name','last_name','company','phone']);
          if($this->usermodel->registerUserData($encryptedUserData))
          {
-            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($this->encryptRow($addressBookData,['name']));
             $userAddressMapperRecordId = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
-            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($userAddressBookConnectData);
+            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($this->encryptRow($userAddressBookConnectData,['email','phone']));
             $flag = true;
          }
        
    return $flag;
    
+}
+
+
+public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
+{
+        $data = array(
+                'login_user_id'=>$email,
+                'ip_address'=>$ipAddress,
+                'browser_details'=>$userAgent,
+                'is_success'=>$isSuccess
+        );
+        $data = $this->encryptRow($data,['login_user_id']);
+        $query = $this->db->table('login_attempts_history');
+        return $query->insert($data);
 }
 
 

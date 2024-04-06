@@ -4,12 +4,15 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 use App\Libraries\SecureDataHandler;
+// use App\Libraries\UserLibrary;
 // use App\Libraries\Lib_log;
 
 class UserModel extends Model
 {
     public $db;
     public $dataHandler;
+//     public $userlibrary;
+     public $environment;
 
 public function __construct()
 {
@@ -18,7 +21,44 @@ public function __construct()
         $secret_key = $_ENV['ENCRYPTION_KEY'];
         $salt = $_ENV['SALT'];
         $this->dataHandler = new SecureDataHandler($secret_key, $salt);
+        // $this->userlibrary = new UserLibrary();
+        $this->environment = $_ENV['CI_ENVIRONMENT'];
 }
+
+// ################## ENCRYPTION AND DECRYPTION FUNCTIONS ##################
+
+// public function encryptRow($data,$columns)
+// {
+//     if($this->environment == 'development')
+//     {
+//         return $data;
+//     }
+//      if(is_array($data))
+//      {
+//         foreach($data as $key => $value)
+//         {
+//                 if(in_array($key,$columns))
+//                 {  
+//                     $data[$key]  = $this->dataHandler->encryptAndStore($value);
+//                 }
+//         }
+//      }
+//      else
+//      {
+//         foreach($data as $key => $value)
+//         {
+//                 if(in_array($key,$columns))
+//                 {  
+//                     $data->$key  = $this->dataHandler->encryptAndStore($value);
+//                 }
+//         }
+//      }
+      
+//    return $data;
+// }
+
+
+##################### END OF ENCRYPTION AND DECRYPTION FUNCTIONS ###########
 
 public function checkUserIdExists($user_id)
 {
@@ -33,11 +73,20 @@ public function registerUserData($data)
         return $query->insert($data);
 }   
     
+// Done encryption
 public function getUserId($email)
 {
-        $q = "SELECT * FROM users WHERE email='{$this->dataHandler->encryptAndStore($email)}'";
+        if($this->environment == 'production')
+        {
+                $q = "SELECT * FROM users WHERE email='{$this->dataHandler->encryptAndStore($email)}'";
+                $query = $this->db->query($q);  
+                return $query->getRow()?$query->getRow()->uid:''; 
+        }
+
+        $q = "SELECT * FROM users WHERE email='{$email}'";
         $query = $this->db->query($q);  
-        return $query->getRow()?$query->getRow()->uid:'';                
+        return $query->getRow()?$query->getRow()->uid:''; 
+                      
 }
 
     
@@ -604,18 +653,19 @@ public function getVisualMetricData()
         return $result; 
 }
 
-public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
-{
-        $data = array(
-                'login_user_id'=>$email,
-                'ip_address'=>$ipAddress,
-                'browser_details'=>$userAgent,
-                'is_success'=>$isSuccess
-        );
-
-        $query = $this->db->table('login_attempts_history');
-        return $query->insert($data);
-}
+// Not in use : 
+// public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
+// {
+//         $data = array(
+//                 'login_user_id'=>$email,
+//                 'ip_address'=>$ipAddress,
+//                 'browser_details'=>$userAgent,
+//                 'is_success'=>$isSuccess
+//         );
+//         $data = $this->encryptRow($data,['login_user_id']);
+//         $query = $this->db->table('login_attempts_history');
+//         return $query->insert($data);
+// }
 
 
 public function insertVisualMetricsMenuModules($data)
@@ -753,6 +803,19 @@ public function insertIntoUserAddressBookConnect($data)
 }
 
 
+public function getAllMenuMainModulesTableData()
+{
+        $result = $this->db->table('menu_main_modules')
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function updateMenuMainModulesTableBatch($data)
+{
+        $this->db->table('menu_main_modules')
+                 ->updateBatch($data, ['code']);
+}
 
 
 

@@ -8,7 +8,7 @@ use App\Models\UserModel;
 use App\Libraries\UserLibrary;
 use App\Libraries\SecureDataHandler;
 use Config\Tester;
-use App\Libraries\Lib_log;
+// use App\Libraries\Lib_log;
 // use CodeIgniter\HTTP\Client;
 
 class UserController extends BaseController
@@ -258,6 +258,7 @@ public function testerToken()
 
 ####################################  USERS FUNCTION ############################
 
+// Handled encryption
 public function register()
 {
     if ($this->request->getMethod() === 'post') 
@@ -370,6 +371,7 @@ public function register()
 
 }
 
+// Done with encryption
 public function login()
 {
     if ($this->request->getMethod() === 'post') 
@@ -403,7 +405,7 @@ public function login()
             if (!password_verify($password, $dbPassword)) 
             {
                 $this->usermodel->increaseUsersInvalidLoginAttempts($this->request->getIPAddress(),$email,time());
-                $this->usermodel->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=0);
+                $this->userlibrary->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=0);
                 $response['message'] = "Invalid password";
                 $response['response'] = false;
                 $response['code'] = 401;
@@ -445,7 +447,7 @@ public function login()
                         date_default_timezone_set('Asia/Kolkata');
                         $currentDate = date("Y:m:d H:i:s");
                         $this->usermodel->updateLastLoginInUsers($userId);
-                        $this->usermodel->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=1);
+                        $this->userlibrary->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=1);
                         $response['message']= "Welcome back ".$email;
                         $response['response'] = true;
                         $response['code'] = 200;
@@ -474,8 +476,8 @@ public function login()
                 }
                     $user_details = $this->usermodel->getUserDetails($userId);
                     $this->usermodel->updateLastLoginInUsers($userId);
-                    $this->usermodel->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=1);
-					$response['message']= "Welcome - : ".$this->dataHandler->retrieveAndDecrypt($user_details->email);
+                    $this->userlibrary->addLoginAttemptsHistory($email,$this->request->getIPAddress(),$_SERVER['HTTP_USER_AGENT'],$is_success=1);
+					$response['message']= "Welcome - : ".$this->userlibrary->decryptValue($user_details->email);
                     $generatedToken = $this->generate_token();
 					$response['response'] = true;
                     $response['code'] = 200;
@@ -523,6 +525,7 @@ public function login()
    
 }
 
+// Done with encryption
 public function forgot_password()
 {
     if ($this->request->getMethod() === 'post') 
@@ -555,7 +558,7 @@ public function forgot_password()
 
             $data = array(
                 'uid'=>$userId,
-                'email'=>$email,
+                'email'=>$this->userlibrary->encryptValue($email),
                 'otp'=>$otp,
                 'otp_active_status'=>1,
                 'created_on'=>$currentDate
@@ -602,6 +605,7 @@ public function forgot_password()
 }
 
 
+// Done with encryption
 public function reset_password()
 {
     if($this->request->getMethod() === 'post') 
@@ -670,6 +674,7 @@ public function reset_password()
 }
 
 
+// Done with encryption
 public function logout()
 {
     $response = [];
@@ -719,6 +724,7 @@ public function logout()
 }
 
 
+// Done with encryption
 public function get_user_data()
 {
     $byPass = false;
@@ -770,7 +776,7 @@ public function get_user_data()
             {
                 return redirect()->route('logout');
             }
-            $decryptedUserData = $this->decryptDataRow($result);
+            $decryptedUserData = $this->userlibrary->decryptRow($result,['username','email','first_name','last_name','company','phone']);
             $response['message']= "Single user details";
             $response['code']= 200;
             $response['response']=true;
@@ -812,7 +818,7 @@ public function get_user_data()
 
 
 // Not in use : 
-// public function get_all_users()
+// public function get_all_users_xxxx()
 // {
 //     $byPass = false;
 //     $tester_token = '';
@@ -904,7 +910,7 @@ public function get_user_data()
 
 
 // Not in use 
-// public function update_user()
+// public function update_user_xxxx()
 // {
 //     if ($this->request->getMethod() === 'post') 
 //     {
@@ -1051,7 +1057,7 @@ public function get_user_data()
 // }
 
 
-// public function update_user_yyyyy()
+// public function update_user_xxxx()
 // {
 //     if ($this->request->getMethod() === 'post') 
 //     {
@@ -1198,7 +1204,7 @@ public function get_user_data()
 // }
 
 
-
+// Not involve in encryption : 
 public function generate_tester_token()
 {
     if ($this->request->getMethod() === 'post') 
@@ -1237,7 +1243,7 @@ public function generate_tester_token()
 	
 }
 
-
+// Done encryption
 public function get_all_users()
 {
     $byPass = false;
@@ -1318,8 +1324,8 @@ public function get_all_users()
             else{
                 $result = $this->userlibrary->getStandardRecords($number_of_records,$pagination_number);
             }
-             
-              $decryptedUserData = $this->decryptDataResult($result);
+        
+              $decryptedUserData = $this->userlibrary->decryptResult($result,['username','first_name','last_name','email','company','phone']);
               $response['message']= "All users details";
               $response['result_data']= $decryptedUserData;
               $response['return_data'] = [];
@@ -1416,7 +1422,7 @@ public function get_main_menu()
             $response['message']= "Main manu module data";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $result;
+            $response['result_data'] = $this->userlibrary->decryptResult($result,[],false);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -3501,6 +3507,24 @@ public function get_user_types_list()
 
 
 ################################ TESTING METHODS #######################
+
+public function encrypt_menu_main_modules_table()
+{
+     $result = $this->usermodel->getAllMenuMainModulesTableData();
+    $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name','link']);
+    $this->usermodel->updateMenuMainModulesTableBatch($encryptedResult);
+    die;
+}
+
+
+public function decrypt_menu_main_modules_table()
+{
+     $result = $this->usermodel->getAllMenuMainModulesTableData();
+    $encryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name','link']);
+    $this->usermodel->updateMenuMainModulesTableBatch($encryptedResult);
+    die;
+}
+
 
 // Working code 
 public function decodeAuthLevel_xxxxx($data)

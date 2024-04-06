@@ -88,6 +88,9 @@ $routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_a
 
 // ################## TESTING URLS ###########################
 
+$routes->get('/encrypt_menu_main_modules_table', 'UserController::encrypt_menu_main_modules_table');
+$routes->get('/decrypt_menu_main_modules_table', 'UserController::decrypt_menu_main_modules_table');
+
 $routes->get('/get_users_auth_template_list_test', 'UserController::get_users_auth_template_list_test');
 
 $routes->get('/testBaseUrl', 'TestController::testBaseUrl');
