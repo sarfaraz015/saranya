@@ -27,6 +27,8 @@ public function __construct()
 
 // ################## ENCRYPTION AND DECRYPTION FUNCTIONS ##################
 
+// Not in use 
+// use No where
 // public function encryptRow($data,$columns)
 // {
 //     if($this->environment == 'development')
@@ -831,7 +833,33 @@ public function updateMenuSubModulesTableBatch($data)
         ->updateBatch($data, ['code']);
 }
 
+public function getAllUserTypesTableData()
+{
+        $result = $this->db->table('user_types')
+        ->get()
+        ->getResult();
+        return $result; 
+}
 
+public function updateUserTypesTableBatch($data)
+{
+        $this->db->table('user_types')
+        ->updateBatch($data, ['code']);
+}
+
+public function getAllVisualMetricsTableData()
+{
+        $result = $this->db->table('visual_metrics')
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function updateVisualMetricsTableBatch($data)
+{
+        $this->db->table('visual_metrics')
+        ->updateBatch($data, ['code']);  
+}
 
 
 }

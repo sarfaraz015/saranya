@@ -66,7 +66,7 @@ public function generateUserId()
     return $final_id;
 }
 
-
+// Not in use : 
 public function encryptUserData($data)
 {
        $username_encrypt = $this->dataHandler->encryptAndStore($data['username']);
@@ -95,6 +95,7 @@ public function encryptUserData($data)
 
 }
 
+// Not in use : 
 public function encryptUserDataForUpdate($data)
 {
        $username_encrypt = $this->dataHandler->encryptAndStore($data['username']);
@@ -178,6 +179,7 @@ public function resetPassword($user_id,$newPassword,$otp)
     return $OTPTimeOutStatus;
 }
 
+// Not in use : 
 public function decryptDataRow($data)
 {
         $arr['id'] = $data->id;
@@ -191,6 +193,7 @@ public function decryptDataRow($data)
     return $arr;
 }
 
+// Not in use : 
 public function decryptDataResult($data)
 {
       $finalArray = [];
@@ -2877,7 +2880,8 @@ public function get_active_users()
 }
 
 
-// Pending : Not correct data in the table
+// Pending : Not correct data in the table : I think this function is not in use
+// Done encryption
 public function get_all_visual_metrics()
 {
     $byPass = false;
@@ -2931,11 +2935,11 @@ public function get_all_visual_metrics()
             }
             
             $resultData = $this->userlibrary->getVisualMetric();
-
+           
             $response['message']= "All visual metric data";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $resultData;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['visual_name','visual_description']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -3098,7 +3102,8 @@ public function update_user_analyticals()
 }
 
 
-// Pending : Still do not have fair idea
+// Pending : Still do not have fair idea and I think its not in use
+// Done encryption
 public function get_user_analytical_view()
 {
     if ($this->request->getMethod() === 'post') 
@@ -3410,6 +3415,7 @@ public function get_himalaya_master_data_count()
 
 }
 
+// Done encryption partially(Pending from superadmin user who get analytical data)
 // Done encryption
 public function get_user_dashboard()
 {
@@ -3467,7 +3473,7 @@ public function get_user_dashboard()
             $response['message']= "Get user dashboard data";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $resultData;
+            $response['result_data'] = $this->userlibrary->decryptResult($resultData,['visual_name','visual_description']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -3504,7 +3510,7 @@ public function get_user_dashboard()
 }
 
 
-// Currently working on this : 
+// Done encryption 
 public function get_user_types_list()
 {
     $result = $this->usermodel->getUserTypesList();
@@ -3512,7 +3518,7 @@ public function get_user_types_list()
     $response['message'] = "User type list";
     $response['code'] = 200;
     $response['response'] = true;
-    $response['result_data'] = $result;
+    $response['result_data'] = $this->userlibrary->decryptResult($result,['short_name','remarks']);
     $response['return_data'] = [];
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
@@ -3521,6 +3527,40 @@ public function get_user_types_list()
 
 
 ################################ TESTING METHODS #######################
+
+public function encrypt_visual_metrics_table()
+{
+    $result = $this->usermodel->getAllVisualMetricsTableData(); 
+    $encryptedResult = $this->userlibrary->encryptResult($result,['visual_name','visual_description','data_set']);
+    $this->usermodel->updateVisualMetricsTableBatch($encryptedResult);
+    die;
+}
+
+public function decrypt_visual_metrics_table()
+{
+    $result = $this->usermodel->getAllVisualMetricsTableData(); 
+    $decryptedResult = $this->userlibrary->decryptResult($result,['visual_name','visual_description','data_set']);
+    $this->usermodel->updateVisualMetricsTableBatch($decryptedResult);
+    die;
+}
+
+
+public function encrypt_user_types_table()
+{
+    $result = $this->usermodel->getAllUserTypesTableData();
+    $encryptedResult = $this->userlibrary->encryptResult($result,['short_name','remarks']);
+    $this->usermodel->updateUserTypesTableBatch($encryptedResult);
+    die;
+}
+
+public function decrypt_user_types_table()
+{
+    $result = $this->usermodel->getAllUserTypesTableData();
+    $decryptedResult = $this->userlibrary->decryptResult($result,['short_name','remarks']);
+    $this->usermodel->updateUserTypesTableBatch($decryptedResult);
+    die;
+}
+
 
 public function encrypt_menu_main_modules_table()
 {

@@ -28,7 +28,8 @@ public function __construct()
 
 // ####################### ENCRYPTION AND DECRYPTION FUNCTIONS ###################
 
-// Not dynamic 
+// Not dynamic : Not in use
+// Used No where
 public function decryptDataRow($data)
 {
         $arr['id'] = $data->id;
@@ -41,7 +42,8 @@ public function decryptDataRow($data)
     return $arr;
 }
 
-// Not dynamic
+// Not dynamic : Not in use
+// Used No where
 public function decryptDataResult($data)
 {
       $finalArray = [];
@@ -60,8 +62,8 @@ public function decryptDataResult($data)
       return $finalArray;
 }
 
-
-
+// Not in use : 
+// Used No where
 // public function encryptRowForSpecificColumns($data,$columns)
 // {
 //         foreach($data as $key => $value)
@@ -74,7 +76,8 @@ public function decryptDataResult($data)
 //    return $data;
 // }
 
-
+// Not in use : 
+// Used No where
 // public function encryptRowForSpecificColumns($data,$columns)
 // {
 //     $environment = $_ENV['CI_ENVIRONMENT'];
@@ -107,6 +110,8 @@ public function decryptDataResult($data)
 //    return $data;
 // }
 
+// Not in use : 
+// Used No where
 public function decryptRowForSpecificColumns($data,$columns)
 {
         foreach($data as $key => $value)
@@ -119,6 +124,8 @@ public function decryptRowForSpecificColumns($data,$columns)
    return $data;
 }
 
+// Not in use : 
+// Used No where
 public function decryptResultForSpecificColumns($data,$columnsArray)
 {
      foreach($data as $key => $userObj){
@@ -132,7 +139,7 @@ public function decryptResultForSpecificColumns($data,$columnsArray)
     return $data;
 }
 
-// Using method : 
+// Method in use :
 public function encryptRow($data,$columns)
 {
     if($this->environment == 'development')
@@ -164,6 +171,7 @@ public function encryptRow($data,$columns)
    return $data;
 }
 
+// Method in use : 
 public function encryptResult($data,$columnsArray)
 {
     if($this->environment == 'development')
@@ -182,7 +190,7 @@ public function encryptResult($data,$columnsArray)
     return $data;
 }
 
-// Using method : 
+// Method in use : 
 public function encryptValue($value)
 {
     if($this->environment=='development'){
@@ -192,7 +200,7 @@ public function encryptValue($value)
     return $value;
 }
 
-// Using method : 
+// Method in use : 
 public function decryptValue($value)
 {
     if($this->environment=='development'){
@@ -202,7 +210,7 @@ public function decryptValue($value)
     return $value;
 }
 
-// Using Method : 
+// Method in use : 
 public function decryptRow($data,$columns)
 {
     if($this->environment == 'development')
@@ -280,6 +288,7 @@ public function decryptResult($data,$columnsArray,$flag=true)
 
 
 // This function we will use when we have nested array:means array inside array and object inside array
+// Method in use :
 public function decryptResultArray($data,$columnsArray,$flag=true)
 {
     if($this->environment == 'development')
@@ -330,9 +339,6 @@ public function decryptResultArray($data,$columnsArray,$flag=true)
     return $finalArray;
 
 }
-
-
-
 
 
 // ######################### END OF ENCRYPTION AND DECRYPTION FUNCTIONS ################
@@ -1926,7 +1932,8 @@ public function getVisualMetric()
     $visualMetricData = $this->usermodel->getVisualMetricData();
     foreach($visualMetricData as $key => $value)
     {
-            $value->data_set = json_decode($value->data_set);
+         
+            $value->data_set = json_decode($this->decryptValue($value->data_set));
     }
     return $visualMetricData;
 }
@@ -1966,6 +1973,7 @@ public function updateUserAnalytics($inputData,$data)
 
 }
 
+// Done encryption
 public function getUserAnalyticalView($data)
 {
      $visualMetricMenuModulesData = $this->usermodel->getVisualMetricsMenuModulesData($data);
@@ -1976,7 +1984,7 @@ public function getUserAnalyticalView($data)
      {
             foreach($visualMetricsData as $key2 => $value2){
                 if($value->visual_code == $value2->code){
-                    $value->data_set = json_decode($value2->data_set);
+                    $value->data_set = json_decode($this->decryptValue($value2->data_set));
                 }
             }
            

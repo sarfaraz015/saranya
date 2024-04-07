@@ -90,8 +90,17 @@ $routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_a
 
 $routes->get('/encrypt_menu_main_modules_table', 'UserController::encrypt_menu_main_modules_table');
 $routes->get('/decrypt_menu_main_modules_table', 'UserController::decrypt_menu_main_modules_table');
+
 $routes->get('/encrypt_menu_sub_modules_table', 'UserController::encrypt_menu_sub_modules_table');
 $routes->get('/decrypt_menu_sub_modules_table', 'UserController::decrypt_menu_sub_modules_table');
+
+$routes->get('/encrypt_user_types_table', 'UserController::encrypt_user_types_table');
+$routes->get('/decrypt_user_types_table', 'UserController::decrypt_user_types_table');
+
+$routes->get('/encrypt_visual_metrics_table', 'UserController::encrypt_visual_metrics_table');
+$routes->get('/decrypt_visual_metrics_table', 'UserController::decrypt_visual_metrics_table');
+
+
 
 
 
