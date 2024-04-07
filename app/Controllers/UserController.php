@@ -1326,6 +1326,7 @@ public function get_all_users()
             }
         
               $decryptedUserData = $this->userlibrary->decryptResult($result,['username','first_name','last_name','email','company','phone']);
+            //   $decryptedUserData = $this->userlibrary->decryptMainMenu($result,['username','first_name','last_name','email','company','phone']);
               $response['message']= "All users details";
               $response['result_data']= $decryptedUserData;
               $response['return_data'] = [];
@@ -1366,6 +1367,7 @@ public function get_all_users()
 
 
 // Working code : 
+// Done encryption with normal and auth9 users
 public function get_main_menu()
 {
     $byPass = false;
@@ -1414,7 +1416,7 @@ public function get_main_menu()
             }
             
             $result = $this->userlibrary->getMainManuData($uid);
-
+       
             if(!$checkTimeoutStatus)
             {
                 return redirect()->to($logoutUrl);
@@ -1422,7 +1424,7 @@ public function get_main_menu()
             $response['message']= "Main manu module data";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $this->userlibrary->decryptResult($result,[],false);
+            $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -1458,7 +1460,7 @@ public function get_main_menu()
 
 }
 
-
+// I think this function is not in use : 
 public function upload_user_profile_img()
 {
     if ($this->request->getMethod() === 'post') 
@@ -1595,6 +1597,7 @@ public function upload_user_profile_img()
 }
 
 
+// I think this function is not in use : 
 public function get_user_profile_img()
 {
     $byPass = false;
@@ -1687,6 +1690,7 @@ public function get_user_profile_img()
 }
 
 
+// Done encryption
 public function create_user()
 {
     if ($this->request->getMethod() === 'post') 
@@ -1819,7 +1823,7 @@ public function create_user()
             'lender_status'=>trim($json_data->lender_status),
             'phone'=>trim($json_data->phone)
         );
-        
+       
         $userResponse = $this->userlibrary->createUser($data);
         if($userResponse['response'])
         {
@@ -1847,6 +1851,7 @@ public function create_user()
 }
 
 
+// Done encryption
 public function update_user()
 {
     if ($this->request->getMethod() === 'post') 
@@ -1997,6 +2002,7 @@ public function update_user()
 }
 
 
+// Done encryption
 public function create_auth_templete()
 {
     if ($this->request->getMethod() === 'post') 
@@ -2134,6 +2140,7 @@ public function create_auth_templete()
 }
 
 
+// I think function not in use : 
 public function get_all_users_auth_templates()
 {
     $byPass = false;
@@ -2227,7 +2234,7 @@ public function get_all_users_auth_templates()
 
 }
 
-
+// Done encryption
 public function get_main_menu_auth()
 {
     $byPass = false;
@@ -2284,7 +2291,7 @@ public function get_main_menu_auth()
             $response['message']= "Main manu auth";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $result;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -2320,6 +2327,7 @@ public function get_main_menu_auth()
 
 }
 
+// Done encryption
 public function get_users_list()
 {
     $byPass = false;
@@ -2413,7 +2421,7 @@ public function get_users_list()
 }
 
 
-
+// Done encryption
 public function get_templates_list()
 {
     $byPass = false;
@@ -2506,7 +2514,7 @@ public function get_templates_list()
 
 }
 
-
+// Done encryption
 public function get_template()
 {
     if ($this->request->getMethod() === 'post') 
@@ -2619,7 +2627,7 @@ public function get_template()
             $response['message'] = "Template data";
             $response['code'] = 200;
             $response['response'] = true;
-            $response['result_data'] = $userResponse;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($userResponse,['name','remarks']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
         }
@@ -2639,6 +2647,7 @@ public function get_template()
 }
 
 
+// No encryption involve : 
 public function save_user_menu_authentication()
 {
     if ($this->request->getMethod() === 'post') 
@@ -2773,7 +2782,7 @@ public function save_user_menu_authentication()
 
 }
 
-
+// No encryption involve : 
 public function get_active_users()
 {
     $byPass = false;
@@ -2867,6 +2876,8 @@ public function get_active_users()
 
 }
 
+
+// Pending : Not correct data in the table
 public function get_all_visual_metrics()
 {
     $byPass = false;
@@ -2961,7 +2972,7 @@ public function get_all_visual_metrics()
 }
 
 
-
+// No encryption involve : 
 public function update_user_analyticals()
 {
     if ($this->request->getMethod() === 'post') 
@@ -3087,7 +3098,7 @@ public function update_user_analyticals()
 }
 
 
-
+// Pending : Still do not have fair idea
 public function get_user_analytical_view()
 {
     if ($this->request->getMethod() === 'post') 
@@ -3212,6 +3223,7 @@ public function get_user_analytical_view()
 }
 
 
+// Done encryption
 public function get_main_menu_list()
 {
     $byPass = false;
@@ -3268,7 +3280,7 @@ public function get_main_menu_list()
             $response['message']= "Get main menu list";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $resultData;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['name']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -3398,6 +3410,7 @@ public function get_himalaya_master_data_count()
 
 }
 
+// Done encryption
 public function get_user_dashboard()
 {
     $byPass = false;
@@ -3491,6 +3504,7 @@ public function get_user_dashboard()
 }
 
 
+// Currently working on this : 
 public function get_user_types_list()
 {
     $result = $this->usermodel->getUserTypesList();
@@ -3520,8 +3534,24 @@ public function encrypt_menu_main_modules_table()
 public function decrypt_menu_main_modules_table()
 {
      $result = $this->usermodel->getAllMenuMainModulesTableData();
-    $encryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name','link']);
-    $this->usermodel->updateMenuMainModulesTableBatch($encryptedResult);
+    $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name','link']);
+    $this->usermodel->updateMenuMainModulesTableBatch($decryptedResult);
+    die;
+}
+
+public function encrypt_menu_sub_modules_table()
+{
+     $result = $this->usermodel->getAllMenuSubModulesTableData();
+    $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name']);
+    $this->usermodel->updateMenuSubModulesTableBatch($encryptedResult);
+    die;
+}
+
+public function decrypt_menu_sub_modules_table()
+{
+     $result = $this->usermodel->getAllMenuSubModulesTableData();
+    $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name']);
+    $this->usermodel->updateMenuSubModulesTableBatch($decryptedResult);
     die;
 }
 

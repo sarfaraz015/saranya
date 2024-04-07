@@ -139,6 +139,7 @@ public function encryptRow($data,$columns)
     {
         return $data;
     }
+    
      if(is_array($data))
      {
         foreach($data as $key => $value)
@@ -159,7 +160,7 @@ public function encryptRow($data,$columns)
                 }
         }
      }
-      
+    //  print_r($data);die;
    return $data;
 }
 
@@ -276,6 +277,62 @@ public function decryptResult($data,$columnsArray,$flag=true)
     }
      
 }
+
+
+// This function we will use when we have nested array:means array inside array and object inside array
+public function decryptResultArray($data,$columnsArray,$flag=true)
+{
+    if($this->environment == 'development')
+    {
+        return $data;
+    }
+
+    $finalArray = [];
+    if($flag)
+    {
+        foreach($data as $key => $userObj)
+        {
+            if(is_array($userObj))
+            {
+                foreach($userObj as $field => $value2){
+                    if(in_array($field,$columnsArray)){
+                        $userObj[$field] = $this->dataHandler->retrieveAndDecrypt($value2);  
+                    }
+                    else
+                    {
+                        $userObj[$field] = $value2; 
+                    }
+                } 
+                array_push($finalArray,$userObj); 
+            }
+            else
+            {
+                foreach($userObj as $field => $value2){
+                    if(in_array($field,$columnsArray)){
+                        $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+                    }
+                    else
+                    {
+                        $userObj->$field = $value2; 
+                    }
+                } 
+                array_push($finalArray,$userObj);
+            }
+                 
+
+        }
+    }
+    else
+    {
+        $finalArray = $data;
+    }
+   
+    return $finalArray;
+
+}
+
+
+
 
 
 // ######################### END OF ENCRYPTION AND DECRYPTION FUNCTIONS ################
@@ -753,7 +810,7 @@ public function getAllUsersForTest()
     return $decryptedData;
 }
 
-
+// Done encryption with normal and auth9 users
 public function getMainManuData($uid)
 {
     $usersResult = $this->db->table('users')
@@ -824,7 +881,7 @@ public function getMainManuData($uid)
                                     }
                             }
 
-                            $arr['sub_menu'] = $subMenuArray;
+                            $arr['sub_menu'] = $this->decryptResultArray($subMenuArray,['sub_name','sub_description','sub_icon_name']);
                             array_push($mainMenuArray,$arr);
                             array_push($tempIdArray,$main_menu_code);
 
@@ -847,15 +904,15 @@ public function getMainManuData($uid)
         $mainMenuCodeArray = array_column($usersAuthResult, 'main_menu_code');
      
         $defaultMenu = $this->db->table('menu_main_modules') 
-                                    ->whereIn('link',['main-dashboard.html','settings.html'])
+                                    ->whereIn('link',[$this->encryptValue('main-dashboard.html'),$this->encryptValue('settings.html')])
                                     ->get()
                                     ->getResult(); 
         $defaultMenuArray = array_column($defaultMenu, 'code');
-     
+        // print_r($defaultMenuArray);die;
 
         $finalCodeArray = array_merge($mainMenuCodeArray,$defaultMenuArray);
         $finalCodeArrayUnique = array_unique($finalCodeArray);
-    
+        // print_r($finalCodeArrayUnique);die;
         $menuMainModulesResult = $this->db->table('menu_main_modules') 
                                             ->where('menu_main_modules.is_deleted',0)
                                             ->whereIn('code',$finalCodeArrayUnique) 
@@ -863,7 +920,7 @@ public function getMainManuData($uid)
                                             ->get()
                                             ->getResult();                                    
     } 
-    
+    // print_r($menuMainModulesResult);die;
     return $menuMainModulesResult;
 }
 
@@ -876,26 +933,24 @@ public function insertUserDataInProfileChangeHistory($uid)
                             ->get()
                             ->getRow();   
     
-    $columns = ['username','email','first_name','last_name','company','phone'];
-    $decryptedUserData = $this->decryptRowForSpecificColumns($userData,$columns);
-
-    unset($decryptedUserData->id);
-    unset($decryptedUserData->password);
-    unset($decryptedUserData->initial_auth_level);
-    unset($decryptedUserData->activation_selector);
-    unset($decryptedUserData->activation_code);
-    unset($decryptedUserData->forgotten_password_selector);
-    unset($decryptedUserData->forgotten_password_code);
-    unset($decryptedUserData->forgotten_password_time);
-    unset($decryptedUserData->remember_selector);
-    unset($decryptedUserData->remember_code);
-    unset($decryptedUserData->ip_address);
-    unset($decryptedUserData->last_login);
-    unset($decryptedUserData->active);
-    unset($decryptedUserData->user_type);
+    unset($userData->id);
+    unset($userData->password);
+    unset($userData->initial_auth_level);
+    unset($userData->activation_selector);
+    unset($userData->activation_code);
+    unset($userData->forgotten_password_selector);
+    unset($userData->forgotten_password_code);
+    unset($userData->forgotten_password_time);
+    unset($userData->remember_selector);
+    unset($userData->remember_code);
+    unset($userData->ip_address);
+    unset($userData->last_login);
+    unset($userData->active);
+    unset($userData->user_type);
     
-    $userArray = (array)$decryptedUserData;
+    $userArray = (array)$userData;
     $userArray['user_id'] = $userArray['uid'];
+    $userArray['code'] = $this->generateStringCode();
     unset($userArray['uid']);
     $userObj = (object)$userArray;
 
@@ -907,7 +962,7 @@ public function insertUserDataInProfileChangeHistory($uid)
 public function checkCreatedUserExistsInUsersTable($email)
 {
     $usersResult = $this->db->table('users')
-    ->where('email',$this->dataHandler->encryptAndStore($email))    
+    ->where('email',$this->encryptValue($email))    
     ->get()
     ->getRow();
   
@@ -925,8 +980,8 @@ public function checkCreatedUserExistsInUsersTable($email)
 public function checkCompanyCityExists($company,$city)
 {
         $addressBookRow = $this->db->table('address_book')
-        ->where('name',$company) 
-        ->where('city',$city)    
+        ->where('name',$this->encryptValue($company)) 
+        ->where('city',$this->encryptValue($city))    
         ->get()
         ->getRow();
         if($addressBookRow){
@@ -1023,6 +1078,7 @@ public function setDefaultMenuUserAuthsPermissionsForCreateUser($user_id,$create
 
 public function createUser($data)
 {
+    // echo "reached";die;
     $response = [];
     if($this->checkCreatedUserExistsInUsersTable($data['email']))
     {
@@ -1033,7 +1089,7 @@ public function createUser($data)
             $response['return_data'] = $data;
             return $response;    
     }
-
+    // echo "reached";die;
     if($this->checkCompanyCityExists($data['company'],$data['city']))
     {
             $response['message'] = "Company and city already exists";
@@ -1043,8 +1099,8 @@ public function createUser($data)
             $response['return_data'] = $data;
             return $response; 
     }
-
-    $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
+    // echo "reached";die;
+    $encryptedData = $this->encryptRow((object)$data,['username','email','phone','company','first_name','last_name']);
         $usersTableData = [
             'uid'=>$encryptedData->uid,
             'ip_address'=>$encryptedData->ip_address,
@@ -1075,7 +1131,7 @@ public function createUser($data)
                 'created_by'=>$encryptedData->created_by,
                 'status'=>$data['lender_status'] 
         ];
-    
+        //  echo "reached";die;
         $userAddressMapperData = [
             'code'=>$userAddressMapperCode,
             'user_id'=>$encryptedData->uid,
@@ -1092,12 +1148,12 @@ public function createUser($data)
             'created_by'=>$encryptedData->created_by,
             'updated_by'=>$encryptedData->created_by
         ];
-    
+
         if($this->usermodel->registerUserData($usersTableData))
         {
-            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($addressBookData);
+            $adressBookRecoredId = $this->usermodel->insertIntoAddressBook($this->encryptRow($addressBookData,['name','address_1','address_2','city','state']));
             $userAddressMapperRecord = $this->usermodel->insertIntoUserAddressMapper($userAddressMapperData);
-            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($userAddressBookConnectData);
+            $userAddressBookConnectRecordId = $this->usermodel->insertIntoUserAddressBookConnect($this->encryptRow($userAddressBookConnectData,['email','phone']));
             $this->setDefaultMenuUserAuthsPermissionsForCreateUser($encryptedData->uid,$encryptedData->created_by);
             $response['message'] = "User created successfully";
             $response['code'] = 200;
@@ -1199,10 +1255,12 @@ public function createUser($data)
 
 // }
 
+
+// Done encryption
 public function updateUser($data,$userId)
 {
         $response = [];
-        $encryptedData = $this->encryptRowForSpecificColumns((object)$data,['username','email','phone','company','first_name','last_name']);
+        $encryptedData = $this->encryptRow((object)$data,['username','email','phone','company','first_name','last_name']);
        
         $usersTableData = [
             'uid'=>$userId,
@@ -1330,7 +1388,7 @@ public function createAuthTemplete($data)
             array_push($finalusersAuthTemplateListsArray,$arr);
         }
     }
-    $rowId = $this->usermodel->insertUserAuthTemplateNames($usersAuthTemplateNames);
+    $rowId = $this->usermodel->insertUserAuthTemplateNames($this->encryptRow($usersAuthTemplateNames,['name','remarks']));
     if($rowId)
     {
         $response['message'] = "User template created successfully lib";
@@ -1434,6 +1492,7 @@ public function getUsersAuthTemplates()
 }
 
 
+// Done encryption
 public function getMainManuDataAuth($uid)
 {
     $usersResult = $this->db->table('users')
@@ -1502,7 +1561,7 @@ public function getMainManuDataAuth($uid)
                                     }
                             }
 
-                            $arr['sub_menu'] = $subMenuArray;
+                            $arr['sub_menu'] = $this->decryptResultArray($subMenuArray,['sub_name','sub_description','sub_icon_name']);
                             array_push($mainMenuArray,$arr);
                             array_push($tempIdArray,$main_menu_code);
 
@@ -1549,7 +1608,7 @@ public function getSpecificColumnsFromResult($data,$columnsArray)
 public function getUsersList()
 {
     $usersData = $this->usermodel->getUsersListsData();
-    $decryptedData = $this->decryptResultForSpecificColumns($usersData,['first_name','last_name','email','phone']);
+    $decryptedData = $this->decryptResult($usersData,['first_name','last_name','email','phone']);
     $finalData = $this->getSpecificColumnsFromResult($decryptedData,['id','uid','first_name','last_name','email']);
     return $finalData;
 }
@@ -1557,10 +1616,12 @@ public function getUsersList()
 public function getallTemplatesList()
 {
     $templateData = $this->usermodel->getTemplatesListData();
+    $templateData = $this->decryptResult($templateData,['name']);
     $finalData = $this->getSpecificColumnsFromResult($templateData,['id','code','name']);
     return $finalData;
 }
 
+// Done encryption
 public function getSingleTemplate($data)
 {
     $usersAuthTemplateData = $this->usermodel->getSingleTemplateData($data['template_code']);
@@ -1596,7 +1657,7 @@ public function getSingleTemplate($data)
                }
            }
 
-           $arr['template_list'] = $templateList;
+           $arr['template_list'] = $this->decryptResultArray($templateList,['tl_main_menu_name','tl_sub_menu_name']);
            array_push($tempCodesArray,$value->code);
            array_push($finalArray,$arr);
        }
@@ -1937,6 +1998,7 @@ public function getUsersDashboard($userId)
     $menuUserAuthCount = $this->usermodel->getMenuUserAuthsCount($userId);
     
     $usersData = $this->usermodel->getUserByUid($userId);
+    // print_r($usersData);die;
     if($usersData->initial_auth_level == 9)
     {
         $result = $this->getVisualMetric();
@@ -1958,9 +2020,9 @@ public function getUsersDashboard($userId)
           unset($decryptedData->remember_selector);
           unset($decryptedData->remember_code);
           unset($decryptedData->activation_code);
-      
-          $lastLoginAttemptsHistoryData = $this->usermodel->getUsersLastLoginAttemptsHistoryData($decryptedData->email);
-          $decryptedData->last_login_details = $lastLoginAttemptsHistoryData;
+        
+          $lastLoginAttemptsHistoryData = $this->usermodel->getUsersLastLoginAttemptsHistoryData($this->encryptValue($decryptedData->email));
+          $decryptedData->last_login_details = $this->decryptResultArray($lastLoginAttemptsHistoryData,['login_user_id']);
           return $decryptedData;
     }
 }

@@ -817,6 +817,20 @@ public function updateMenuMainModulesTableBatch($data)
                  ->updateBatch($data, ['code']);
 }
 
+public function getAllMenuSubModulesTableData()
+{
+        $result = $this->db->table('menu_sub_modules')
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function updateMenuSubModulesTableBatch($data)
+{
+        $this->db->table('menu_sub_modules')
+        ->updateBatch($data, ['code']);
+}
+
 
 
 
