@@ -3528,72 +3528,270 @@ public function get_user_types_list()
 
 ################################ TESTING METHODS #######################
 
-public function encrypt_visual_metrics_table()
-{
-    $result = $this->usermodel->getAllVisualMetricsTableData(); 
-    $encryptedResult = $this->userlibrary->encryptResult($result,['visual_name','visual_description','data_set']);
-    $this->usermodel->updateVisualMetricsTableBatch($encryptedResult);
-    die;
-}
 
-public function decrypt_visual_metrics_table()
-{
-    $result = $this->usermodel->getAllVisualMetricsTableData(); 
-    $decryptedResult = $this->userlibrary->decryptResult($result,['visual_name','visual_description','data_set']);
-    $this->usermodel->updateVisualMetricsTableBatch($decryptedResult);
-    die;
-}
+// Working Method
+// public function encrypt_all_tables()
+// {
+//     // Table users : 
+//     $usersResult = $this->usermodel->getAllUsersTableData();
+//     $encryptedUsersResult = $this->userlibrary->encryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
+//     $this->usermodel->updateUsersTableBatch($encryptedUsersResult);
+
+//     // Table address_book
+//     $addressBookResult = $this->usermodel->getAddressBookTableData();
+//     $finalAddressBookResult = $this->userlibrary->encryptResult($addressBookResult,['name','address_1','address_2','state','city']);
+//     $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
+
+//     // Table  address_book_connect
+
+//      $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData();
+//     $finalAddressBookConnectResult = $this->userlibrary->encryptResult($addressBookConnectResult,['email','phone']);
+//     $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
+
+//     // Table  api_request_type
+
+//     $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData();
+//     $finalApiRequestTypeResult = $this->userlibrary->encryptResult($apiRequestTypeResult,['api_request_type']);
+//     $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
+
+      
+//     // Table api_url_endpoints
+
+//     $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
+//     $finalApiUrlEndpointsResult = $this->userlibrary->encryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+//     $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
+
+//     // login_attempts_history
+
+//     $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
+//     $finalLoginAttemptsHistoryResult = $this->userlibrary->encryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
+//     $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
+
+//     // menu_main_modules
+
+//     $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
+//     $finalMenuMainModulesResult = $this->userlibrary->encryptResult($menuMainModulesResult,['name','description','icon_name','link']);
+//     $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
+
+//     // menu_sub_modules
+
+//     $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
+//     $finalMenuSubModulesResult = $this->userlibrary->encryptResult($menuSubModulesResult,['name','description','icon_name']);
+//     $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
 
 
-public function encrypt_user_types_table()
-{
-    $result = $this->usermodel->getAllUserTypesTableData();
-    $encryptedResult = $this->userlibrary->encryptResult($result,['short_name','remarks']);
-    $this->usermodel->updateUserTypesTableBatch($encryptedResult);
-    die;
-}
+//     // users_auth_template_names
 
-public function decrypt_user_types_table()
-{
-    $result = $this->usermodel->getAllUserTypesTableData();
-    $decryptedResult = $this->userlibrary->decryptResult($result,['short_name','remarks']);
-    $this->usermodel->updateUserTypesTableBatch($decryptedResult);
-    die;
-}
+//     $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
+//     $finalUsersAuthTemplateNamesResult = $this->userlibrary->encryptResult($usersAuthTemplateNamesResult,['name','remarks']);
+//     $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
+
+//     // users_log_history
+
+//     $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
+//     $finalUsersLoginHistoryResult = $this->userlibrary->encryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
+//     $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
 
 
-public function encrypt_menu_main_modules_table()
-{
-     $result = $this->usermodel->getAllMenuMainModulesTableData();
-    $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name','link']);
-    $this->usermodel->updateMenuMainModulesTableBatch($encryptedResult);
-    die;
-}
+//      // users_otp
+//     $usersOtpResult = $this->usermodel->getUsersOtpTableData();
+//     $finalUsersOtpResult = $this->userlibrary->encryptResult($usersOtpResult,['email']);
+//     $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
+
+//     // user_profile_change_history
+
+//     $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
+//     $finalUserProfileChangeHistoryResult = $this->userlibrary->encryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
+//     $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
 
 
-public function decrypt_menu_main_modules_table()
-{
-     $result = $this->usermodel->getAllMenuMainModulesTableData();
-    $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name','link']);
-    $this->usermodel->updateMenuMainModulesTableBatch($decryptedResult);
-    die;
-}
+//     // user_types
 
-public function encrypt_menu_sub_modules_table()
-{
-     $result = $this->usermodel->getAllMenuSubModulesTableData();
-    $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name']);
-    $this->usermodel->updateMenuSubModulesTableBatch($encryptedResult);
-    die;
-}
+//     $userTypesResult = $this->usermodel->getAllUserTypesTableData();
+//     $finalUserTypesResult = $this->userlibrary->encryptResult($userTypesResult,['short_name','remarks']);
+//     $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
 
-public function decrypt_menu_sub_modules_table()
-{
-     $result = $this->usermodel->getAllMenuSubModulesTableData();
-    $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name']);
-    $this->usermodel->updateMenuSubModulesTableBatch($decryptedResult);
-    die;
-}
+
+//         // visual_metrics
+
+//         $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
+//         $finalVisualMetricsResult = $this->userlibrary->encryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
+//         $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+
+//     die;
+// }
+
+
+// Working Method
+// public function decrypt_all_tables()
+// {
+//     // Table users : 
+//     $usersResult = $this->usermodel->getAllUsersTableData();
+//     $decryptedUsersResult = $this->userlibrary->decryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
+//     $this->usermodel->updateUsersTableBatch($decryptedUsersResult);
+
+//     //    Table address_book
+//        $addressBookResult = $this->usermodel->getAddressBookTableData(); 
+//        $finalAddressBookResult = $this->userlibrary->decryptResult($addressBookResult,['name','address_1','address_2','state','city']);
+//        $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
+
+//     // Table  address_book_connect
+//         $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData(); 
+//        $finalAddressBookConnectResult = $this->userlibrary->decryptResult($addressBookConnectResult,['email','phone']);
+//        $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
+
+//     // Table  api_request_type
+
+//         $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData(); 
+//        $finalApiRequestTypeResult = $this->userlibrary->decryptResult($apiRequestTypeResult,['api_request_type']);
+//        $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
+
+
+//     //  Table api_url_endpoints
+
+//      $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
+//      $finalApiUrlEndpointsResult = $this->userlibrary->decryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+//      $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
+
+//     // login_attempts_history
+
+//     $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
+//     $finalLoginAttemptsHistoryResult = $this->userlibrary->decryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
+//     $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
+
+
+//     // menu_main_modules
+
+//     $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
+//     $finalMenuMainModulesResult = $this->userlibrary->decryptResult($menuMainModulesResult,['name','description','icon_name','link']);
+//     $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
+     
+
+//     // menu_sub_modules
+
+//     $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
+//     $finalMenuSubModulesResult = $this->userlibrary->decryptResult($menuSubModulesResult,['name','description','icon_name']);
+//     $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
+
+
+
+//     // users_auth_template_names
+
+//      $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
+//     $finalUsersAuthTemplateNamesResult = $this->userlibrary->decryptResult($usersAuthTemplateNamesResult,['name','remarks']);
+//     $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
+
+
+//     // users_log_history
+
+//     $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
+//     $finalUsersLoginHistoryResult = $this->userlibrary->decryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
+//     $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
+
+//     // users_otp
+
+//        $usersOtpResult = $this->usermodel->getUsersOtpTableData();
+//     $finalUsersOtpResult = $this->userlibrary->decryptResult($usersOtpResult,['email']);
+//     $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
+
+//     // user_profile_change_history
+
+//         $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
+//     $finalUserProfileChangeHistoryResult = $this->userlibrary->decryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
+//     $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
+
+
+//     //  user_types
+
+//     $userTypesResult = $this->usermodel->getAllUserTypesTableData();
+//     $finalUserTypesResult = $this->userlibrary->decryptResult($userTypesResult,['short_name','remarks']);
+//     $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
+
+
+
+//     // visual_metrics
+
+//     $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
+//     $finalVisualMetricsResult = $this->userlibrary->decryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
+//     $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+
+//     die;
+// }
+
+
+
+
+
+
+
+############################################################
+
+// public function encrypt_visual_metrics_table()
+// {
+//     $result = $this->usermodel->getAllVisualMetricsTableData(); 
+//     $encryptedResult = $this->userlibrary->encryptResult($result,['visual_name','visual_description','data_set']);
+//     $this->usermodel->updateVisualMetricsTableBatch($encryptedResult);
+//     die;
+// }
+
+// public function decrypt_visual_metrics_table()
+// {
+//     $result = $this->usermodel->getAllVisualMetricsTableData(); 
+//     $decryptedResult = $this->userlibrary->decryptResult($result,['visual_name','visual_description','data_set']);
+//     $this->usermodel->updateVisualMetricsTableBatch($decryptedResult);
+//     die;
+// }
+
+
+// public function encrypt_user_types_table()
+// {
+//     $result = $this->usermodel->getAllUserTypesTableData();
+//     $encryptedResult = $this->userlibrary->encryptResult($result,['short_name','remarks']);
+//     $this->usermodel->updateUserTypesTableBatch($encryptedResult);
+//     die;
+// }
+
+// public function decrypt_user_types_table()
+// {
+//     $result = $this->usermodel->getAllUserTypesTableData();
+//     $decryptedResult = $this->userlibrary->decryptResult($result,['short_name','remarks']);
+//     $this->usermodel->updateUserTypesTableBatch($decryptedResult);
+//     die;
+// }
+
+
+// public function encrypt_menu_main_modules_table()
+// {
+//      $result = $this->usermodel->getAllMenuMainModulesTableData();
+//     $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name','link']);
+//     $this->usermodel->updateMenuMainModulesTableBatch($encryptedResult);
+//     die;
+// }
+
+
+// public function decrypt_menu_main_modules_table()
+// {
+//      $result = $this->usermodel->getAllMenuMainModulesTableData();
+//     $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name','link']);
+//     $this->usermodel->updateMenuMainModulesTableBatch($decryptedResult);
+//     die;
+// }
+
+// public function encrypt_menu_sub_modules_table()
+// {
+//      $result = $this->usermodel->getAllMenuSubModulesTableData();
+//     $encryptedResult = $this->userlibrary->encryptResult($result,['name','description','icon_name']);
+//     $this->usermodel->updateMenuSubModulesTableBatch($encryptedResult);
+//     die;
+// }
+
+// public function decrypt_menu_sub_modules_table()
+// {
+//      $result = $this->usermodel->getAllMenuSubModulesTableData();
+//     $decryptedResult = $this->userlibrary->decryptResult($result,['name','description','icon_name']);
+//     $this->usermodel->updateMenuSubModulesTableBatch($decryptedResult);
+//     die;
+// }
 
 
 // Working code 

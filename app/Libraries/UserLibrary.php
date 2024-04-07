@@ -274,7 +274,14 @@ public function decryptResult($data,$columnsArray,$flag=true)
         foreach($data as $key => $userObj){
             foreach($userObj as $field => $value2){
                 if(in_array($field,$columnsArray)){
-                     $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);  
+                    if($value2!= "")
+                    {
+                        $userObj->$field = $this->dataHandler->retrieveAndDecrypt($value2);
+                    }
+                    else
+                    {
+                        $userObj->$field = $value2;
+                    }  
                 }
             }
          }
@@ -1850,7 +1857,7 @@ public function saveUserMenuAuthentication($data)
 public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNumber)
 {
     $query = $this->db->table('api_url_endpoints');
-    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $searchCriteria[0]->key);
+    $query->where($searchCriteria[0]->column_name.$searchCriteria[0]->operator, $this->encryptValue($searchCriteria[0]->key));
     foreach ($searchCriteria as $index => $criteria) {
         if($index!=0)
         {
@@ -1860,16 +1867,16 @@ public function getFilteredApis($searchCriteria, $numberOfRecords, $paginationNu
             $operator = $criteria->operator;
 
             if($operator == 'like'){
-                $query->like($columnName, $key);
+                $query->like($columnName, $this->encryptValue($key));
             }
     
             if($operator!='like'){
                 switch ($searchCriteria[$index-1]->type) {
                     case 'and':
-                        $query->where($columnName.$operator, $key);
+                        $query->where($columnName.$operator, $this->encryptValue($key));
                         break;
                     case 'or':
-                        $query->orWhere($columnName.$operator, $key);
+                        $query->orWhere($columnName.$operator, $this->encryptValue($key));
                         break;
                     case 'end':
                         break;
@@ -2096,6 +2103,27 @@ public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
         $data = $this->encryptRow($data,['login_user_id']);
         $query = $this->db->table('login_attempts_history');
         return $query->insert($data);
+}
+
+
+// Done encrption
+public function insertApiUrlEndPoints($data)
+{
+        $encryptData = $this->encryptRow($data,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+        $this->db->table('api_url_endpoints')
+        ->insert($encryptData);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
+
+
+public function updateApiUrlEndPoints($code,$data)
+{
+    $encryptData = $this->encryptRow($data,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+        $this->db->table('api_url_endpoints')
+        ->where('code',$code)
+        ->update($encryptData); 
+        return true;
 }
 
 

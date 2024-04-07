@@ -520,21 +520,6 @@ public function getActiveUsersCount()
         return $count;
 }
 
-public function insertApiUrlEndPoints($data)
-{
-        $this->db->table('api_url_endpoints')
-        ->insert($data);
-        $insertedID = $this->db->insertID();
-        return $insertedID; 
-}
-
-public function updateApiUrlEndPoints($code,$data)
-{
-        $this->db->table('api_url_endpoints')
-        ->where('code',$code)
-        ->update($data); 
-        return true;
-}
 
 public function getAddressBookListData()
 {
@@ -603,7 +588,16 @@ public function setMenuUserAuthsPermissions($insertData,$updateData)
 
 public function getDefaultMenuMainModules()
 {
-        $links = ['main-dashboard.html', 'settings.html'];
+        $links = [];
+        if($this->environment == 'production')
+        {
+           $links = [$this->dataHandler->encryptAndStore('main-dashboard.html'), $this->dataHandler->encryptAndStore('settings.html')];
+        }
+        else
+        {
+           $links = ['main-dashboard.html','settings.html'];    
+        }
+        
         $result = $this->db->table('menu_main_modules') 
         ->whereIn('link', $links)
         ->get()
@@ -859,6 +853,140 @@ public function updateVisualMetricsTableBatch($data)
 {
         $this->db->table('visual_metrics')
         ->updateBatch($data, ['code']);  
+}
+
+// #################### FOR ENCRYPTION AND DECRYPTION ##############
+
+
+public function getAllUsersTableData()
+{
+        $result = $this->db->table('users')->get()->getResult();
+        return $result; 
+}
+
+public function updateUsersTableBatch($data)
+{
+        $this->db->table('users')->updateBatch($data, ['uid']);   
+}
+
+###############################
+public function getAddressBookTableData()
+{
+        $result = $this->db->table('address_book')->get()->getResult();
+        return $result; 
+}
+
+public function updateAddressBookTableBatch($data)
+{
+        $this->db->table('address_book')->updateBatch($data, ['code']); 
+}
+
+#######################
+
+public function getAddressBookConnectTableData()
+{
+        $result = $this->db->table('address_book_connect')->get()->getResult();
+        return $result; 
+}
+
+public function updateAddressBookConnectTableBatch($data)
+{
+        $this->db->table('address_book_connect')->updateBatch($data, ['code']); 
+}
+// #########################
+
+
+public function getApiRequestTypeTableData()
+{
+        $result = $this->db->table('api_request_type')->get()->getResult();
+        return $result; 
+}
+
+public function updateApiRequestTypeTableBatch($data)
+{
+        $this->db->table('api_request_type')->updateBatch($data, ['code']); 
+}
+
+###########################
+
+public function getApiUrlEndpointsTableData()
+{
+        $result = $this->db->table('api_url_endpoints')->get()->getResult();
+        return $result; 
+}
+
+public function updateApiUrlEndpointsTableBatch($data)
+{
+        $this->db->table('api_url_endpoints')->updateBatch($data, ['code']); 
+}
+
+###########################
+
+
+public function getLoginAttemptsHistoryTableData()
+{
+        $result = $this->db->table('login_attempts_history')->get()->getResult();
+        return $result; 
+}
+
+public function updateLoginAttemptsHistoryTableBatch($data)
+{
+        $this->db->table('login_attempts_history')->updateBatch($data, ['id']); 
+}
+
+##################################
+
+
+public function getUsersAuthTemplateNamesTableData()
+{
+        $result = $this->db->table('users_auth_template_names')->get()->getResult();
+        return $result; 
+}
+
+public function updateUsersAuthTemplateNamesTableBatch($data)
+{
+        $this->db->table('users_auth_template_names')->updateBatch($data, ['code']); 
+}
+
+###################################
+
+public function getUsersLoginHistoryTableData()
+{
+        $result = $this->db->table('users_log_history')->get()->getResult();
+        return $result; 
+}
+
+
+public function updateUsersLoginHistoryTableBatch($data)
+{
+        $this->db->table('users_log_history')->updateBatch($data, ['id']); 
+}
+
+########################
+
+public function getUsersOtpTableData()
+{
+        $result = $this->db->table('users_otp')->get()->getResult();
+        return $result; 
+}
+
+public function updateUsersOtpTableBatch($data)
+{
+        $this->db->table('users_otp')->updateBatch($data, ['id']); 
+}
+
+#######################
+
+
+public function getUserProfileChangeHistoryTableData()
+{
+        $result = $this->db->table('user_profile_change_history')->get()->getResult();
+        return $result; 
+}
+
+public function updateUserProfileChangeHistoryTableBatch($data)
+{
+        $this->db->table('user_profile_change_history')->updateBatch($data, ['code']); 
 }
 
 

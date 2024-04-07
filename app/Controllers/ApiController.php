@@ -33,6 +33,56 @@ class ApiController extends BaseController
         echo "calling index from ApiController";die;
     }
 
+    public function testerToken()
+    {
+        $response = [];
+        $error_code = '';
+        $users = $this->tester->getTestersData();
+        
+        $token = $this->request->getHeader('Authorization');
+        $email = $this->request->getHeader('testerEmail');
+    
+        if($token!='')
+        {
+                if($email!='')
+                {
+                    if(array_key_exists($email->getValue(),$users))
+                    {
+                        if('Bearer '.$users[$email->getValue()]==$token->getValue())
+                        {
+                            $response['message']="success";
+                            $response['response'] = true;
+                        }
+                        else
+                        {
+                            $response['message']="Invalid tester token";
+                            $response['response'] = false;
+                        }
+                    }
+                    else
+                    {
+                            $response['message']="Invalid tester email-id";
+                            $response['response'] = false;
+                    }
+                }
+                else
+                {
+                    $response['message']="No tester email-id found";
+                    $response['response'] = false;
+                }
+        }
+        else
+        {
+            $response['message']="No tester token found";
+            $response['response'] = false;
+        }
+    
+        return $response;
+    }   
+
+
+
+// Done encrption
 public function create_api()
 {
     if ($this->request->getMethod() === 'post') 
@@ -159,7 +209,7 @@ public function create_api()
             'updated_by'=>$uid
         );
         
-        $rowId = $this->usermodel->insertApiUrlEndPoints($data);
+        $rowId = $this->userlibrary->insertApiUrlEndPoints($data);
 
         if($rowId)
         {
@@ -186,6 +236,7 @@ public function create_api()
 }
 
 
+// Done encrption
 public function get_all_apis()
 {
     $rules = [
@@ -266,7 +317,7 @@ public function get_all_apis()
                 return redirect()->to($logoutUrl);
               }
               $response['message']= "get apis";
-              $response['result_data']= $result;
+              $response['result_data']= $this->userlibrary->decryptResult($result,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
               $response['return_data'] = [];
               $response['response']=true;
               $response['code']=true;
@@ -304,6 +355,7 @@ public function get_all_apis()
 }
 
 
+// Done encrption
 public function update_api()
 {
     if ($this->request->getMethod() === 'post') 
@@ -431,7 +483,7 @@ public function update_api()
             'updated_by'=>$uid
         );
         
-        $result = $this->usermodel->updateApiUrlEndPoints($code,$data);
+        $result = $this->userlibrary->updateApiUrlEndPoints($code,$data);
 
         if($result)
         {
@@ -458,6 +510,7 @@ public function update_api()
 }
 
 
+// Done encrption
 public function get_address_book_list()
 {
     $byPass = false;
@@ -514,7 +567,7 @@ public function get_address_book_list()
             $response['message']= "get all address book list";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $result;
+            $response['result_data'] = $this->userlibrary->decryptResult($result,['name']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -550,7 +603,7 @@ public function get_address_book_list()
 
 }
 
-
+// Done encrption
 public function get_api_request_type_list()
 {
     $byPass = false;
@@ -607,7 +660,7 @@ public function get_api_request_type_list()
             $response['message']= "get all api request type list";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $result;
+            $response['result_data'] = $this->userlibrary->decryptResult($result,['api_request_type']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -643,7 +696,7 @@ public function get_api_request_type_list()
 
 }
 
-
+// Done encrption
 public function get_api_by_id()
 {
     if ($this->request->getMethod() === 'post') 
@@ -756,7 +809,7 @@ public function get_api_by_id()
             $response['message'] = "Api data";
             $response['code'] = 200;
             $response['response'] = true;
-            $response['result_data'] = $userResponse;
+            $response['result_data'] = $this->userlibrary->decryptRow($userResponse,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
         }
@@ -776,6 +829,7 @@ public function get_api_by_id()
 }
 
 
+// No encryption involves 
 public function delete_api()
 {
     if ($this->request->getMethod() === 'post') 
@@ -907,7 +961,7 @@ public function delete_api()
 
 }
 
-
+// No encryption involes
 public function total_api_count()
 {
     $byPass = false;
@@ -1002,6 +1056,7 @@ public function total_api_count()
 }
 
 
+// No encryption involes
 public function total_depreciated_api_count()
 {
     $byPass = false;
