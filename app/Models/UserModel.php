@@ -13,6 +13,7 @@ class UserModel extends Model
     public $dataHandler;
 //     public $userlibrary;
      public $environment;
+     public $enableEncryptDecryptInDevEnv;
 
 public function __construct()
 {
@@ -23,6 +24,8 @@ public function __construct()
         $this->dataHandler = new SecureDataHandler($secret_key, $salt);
         // $this->userlibrary = new UserLibrary();
         $this->environment = $_ENV['CI_ENVIRONMENT'];
+        $this->enableEncryptDecryptInDevEnv = $_ENV['ENABLE_ECRYPT_DECRYPT_INDEV_ENV'];
+        // echo $this->enableEncryptDecryptInDevEnv;
 }
 
 // ################## ENCRYPTION AND DECRYPTION FUNCTIONS ##################
@@ -78,14 +81,14 @@ public function registerUserData($data)
 // Done encryption
 public function getUserId($email)
 {
-        if($this->environment == 'production')
+        if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
         {
-                $q = "SELECT * FROM users WHERE email='{$this->dataHandler->encryptAndStore($email)}'";
+                $q = "SELECT * FROM users WHERE email='{$email}'";
                 $query = $this->db->query($q);  
-                return $query->getRow()?$query->getRow()->uid:''; 
+                return $query->getRow()?$query->getRow()->uid:'';
         }
 
-        $q = "SELECT * FROM users WHERE email='{$email}'";
+        $q = "SELECT * FROM users WHERE email='{$this->dataHandler->encryptAndStore($email)}'";
         $query = $this->db->query($q);  
         return $query->getRow()?$query->getRow()->uid:''; 
                       
@@ -589,13 +592,13 @@ public function setMenuUserAuthsPermissions($insertData,$updateData)
 public function getDefaultMenuMainModules()
 {
         $links = [];
-        if($this->environment == 'production')
+        if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
         {
-           $links = [$this->dataHandler->encryptAndStore('main-dashboard.html'), $this->dataHandler->encryptAndStore('settings.html')];
+           $links = ['main-dashboard.html','settings.html'];  
         }
         else
         {
-           $links = ['main-dashboard.html','settings.html'];    
+                $links = [$this->dataHandler->encryptAndStore('main-dashboard.html'), $this->dataHandler->encryptAndStore('settings.html')];
         }
         
         $result = $this->db->table('menu_main_modules') 
@@ -664,11 +667,20 @@ public function getVisualMetricData()
 // }
 
 
+// Not in use but working method
+// public function insertVisualMetricsMenuModules($data)
+// {
+//         $this->db->table('visual_metrics_menu_modules')
+//         ->insertBatch($data);
+//         return true;
+// }
+
 public function insertVisualMetricsMenuModules($data)
 {
         $this->db->table('visual_metrics_menu_modules')
-        ->insertBatch($data);
-        return true;
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;  
 }
 
 
@@ -855,7 +867,80 @@ public function updateVisualMetricsTableBatch($data)
         ->updateBatch($data, ['code']);  
 }
 
-// #################### FOR ENCRYPTION AND DECRYPTION ##############
+public function getUserAuthsData($userId)
+{
+        $result = $this->db->table('menu_user_auths')
+        ->select('menu_user_auths.*,mm.name as main_menu_name,sm.name as sub_menu_name')
+        ->join('menu_main_modules as mm','menu_user_auths.main_menu_code=mm.code','left')
+        ->join('menu_sub_modules as sm','menu_user_auths.sub_menu_code=sm.code','left')
+        ->where('user_id',$userId)
+        ->get()
+        ->getResult();
+        return $result;   
+}
+
+
+
+public function getVisualMetricsMenuModulesDataByUid($data)
+{
+        $result = $this->db->table('visual_metrics_menu_modules') 
+         ->select('visual_metrics_menu_modules.*,u.username as user_name')
+         ->join('users as u','visual_metrics_menu_modules.user_id=u.uid')
+        ->where('user_id',$data['user_id'])
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function checkMenuCodeExistsForVisualCode($userId,$visualCode,$mainMenuCode)
+{
+        $result = $this->db->table(' visual_metrics_menu_modules') 
+        ->where('user_id',$userId)
+        ->where('visual_code',$visualCode)
+        ->where('menu_code',$mainMenuCode)
+        ->get()
+        ->getRow();
+        if($result){
+                return true;
+        }
+        else{
+                return false;
+        }
+}
+
+public function changeUsersVisualMetricStatus($userId,$menuCode,$analyticalCode,$data)
+{
+         $this->db->table('visual_metrics_menu_modules')
+        ->where('user_id', $userId)
+        ->where('menu_code', $menuCode)
+        ->where('visual_code', $analyticalCode)
+        ->update($data);
+        return true; 
+}
+
+
+
+############################ TESTING AREA #########################################
+
+
+public function filteredUserExists($email)
+{
+        $result = $this->db->table('users')
+                 ->where('email',$email)
+                 ->get()
+                 ->getRow();
+
+        if($result){
+                return true;
+        }        
+        else{
+                return false;
+        }
+}
+
+
+
+// #################### FOR ENCRYPTION AND DECRYPTION OD TABLES ##############
 
 
 public function getAllUsersTableData()

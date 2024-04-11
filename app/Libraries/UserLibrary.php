@@ -12,6 +12,7 @@ class UserLibrary{
 	  public $usermodel;
       public $tester;
       public $environment;
+      public $enableEncryptDecryptInDevEnv;
 
 public function __construct()
 {
@@ -23,6 +24,7 @@ public function __construct()
 	$this->dataHandler = new SecureDataHandler($secret_key, $salt);
     $this->tester = new Tester();
     $this->environment = $_ENV['CI_ENVIRONMENT'];
+    $this->enableEncryptDecryptInDevEnv = $_ENV['ENABLE_ECRYPT_DECRYPT_INDEV_ENV'];
 }
 
 
@@ -142,7 +144,7 @@ public function decryptResultForSpecificColumns($data,$columnsArray)
 // Method in use :
 public function encryptRow($data,$columns)
 {
-    if($this->environment == 'development')
+    if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
     {
         return $data;
     }
@@ -174,7 +176,7 @@ public function encryptRow($data,$columns)
 // Method in use : 
 public function encryptResult($data,$columnsArray)
 {
-    if($this->environment == 'development')
+    if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
     {
         return $data;
     }
@@ -193,7 +195,7 @@ public function encryptResult($data,$columnsArray)
 // Method in use : 
 public function encryptValue($value)
 {
-    if($this->environment=='development'){
+    if($this->environment=='development' && $this->enableEncryptDecryptInDevEnv=='false'){
         return $value;
     }
     $value = $this->dataHandler->encryptAndStore($value);
@@ -203,7 +205,7 @@ public function encryptValue($value)
 // Method in use : 
 public function decryptValue($value)
 {
-    if($this->environment=='development'){
+    if($this->environment=='development' && $this->enableEncryptDecryptInDevEnv=='false'){
         return $value;
     }
     $value = $this->dataHandler->retrieveAndDecrypt($value);
@@ -213,7 +215,7 @@ public function decryptValue($value)
 // Method in use : 
 public function decryptRow($data,$columns)
 {
-    if($this->environment == 'development')
+    if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
     {
         return $data;
     }
@@ -264,7 +266,7 @@ public function decryptRow($data,$columns)
 // Method in use : 
 public function decryptResult($data,$columnsArray,$flag=true)
 {
-    if($this->environment == 'development')
+    if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
     {
         return $data;
     }
@@ -298,7 +300,7 @@ public function decryptResult($data,$columnsArray,$flag=true)
 // Method in use :
 public function decryptResultArray($data,$columnsArray,$flag=true)
 {
-    if($this->environment == 'development')
+    if($this->environment == 'development' && $this->enableEncryptDecryptInDevEnv=='false')
     {
         return $data;
     }
@@ -1946,39 +1948,87 @@ public function getVisualMetric()
 }
 
 
+// public function updateUserAnalytics_xxx($inputData,$data)
+// {
+//     $response = [];
+//     $finalArray = [];
+//     foreach($inputData as $key => $value)
+//     {
+//         $arr = [];
+//         $arr['code'] = $this->generateStringCode();
+//         $arr['user_id'] = $value->user_id;
+//         $arr['menu_code'] = $value->menu_code;
+//         $arr['visual_code'] = $value->analytical_code;
+//         $arr['created_by'] = $data['login_user_id'];
+//         $arr['updated_by'] = $data['login_user_id'];
+//         $arr['is_enabled'] = $value->status;
+//         array_push($finalArray,$arr);
+//     }
+
+//     if($this->usermodel->insertVisualMetricsMenuModules($finalArray))
+//     {
+//         $response['response'] = true;
+//     }
+//     else
+//     {
+//         $response['message'] = "Error in updating user analyticals";
+//         $response['code'] = 401;
+//         $response['response'] = false;
+//         $response['result_data'] = [];
+//         $response['return_data'] = [];
+//     }
+
+//     return $response;
+
+// }
+
+
 public function updateUserAnalytics($inputData,$data)
 {
     $response = [];
-    $finalArray = [];
     foreach($inputData as $key => $value)
     {
-        $arr = [];
-        $arr['code'] = $this->generateStringCode();
-        $arr['user_id'] = $value->user_id;
-        $arr['menu_code'] = $value->menu_code;
-        $arr['visual_code'] = $value->analytical_code;
-        $arr['created_by'] = $data['login_user_id'];
-        $arr['updated_by'] = $data['login_user_id'];
-        $arr['is_enabled'] = $value->status;
-        array_push($finalArray,$arr);
-    }
+        $visualMetricsMenuStatus = $this->usermodel->checkMenuCodeExistsForVisualCode($value->user_id,$value->analytical_code,$value->menu_code);
+        if($visualMetricsMenuStatus)
+        {
+            $response['message'] = "Menu permission already exists";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            return $response;
+        }
+        else
+        {
+            $arr = [];
+            $arr['code'] = $this->generateStringCode();
+            $arr['user_id'] = $value->user_id;
+            $arr['menu_code'] = $value->menu_code;
+            $arr['visual_code'] = $value->analytical_code;
+            $arr['created_by'] = $data['login_user_id'];
+            $arr['updated_by'] = $data['login_user_id'];
+            $arr['is_enabled'] = $value->status;
 
-    if($this->usermodel->insertVisualMetricsMenuModules($finalArray))
-    {
-        $response['response'] = true;
+            if($this->usermodel->insertVisualMetricsMenuModules($arr))
+            {
+                $response['response'] = true;
+            }
+            else
+            {
+                $response['message'] = "Error in updating user analyticals";
+                $response['code'] = 401;
+                $response['response'] = false;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
     }
-    else
-    {
-        $response['message'] = "Error in updating user analyticals";
-        $response['code'] = 401;
-        $response['response'] = false;
-        $response['result_data'] = [];
-        $response['return_data'] = [];
-    }
-
+    
     return $response;
 
 }
+
+
 
 // Done encryption
 public function getUserAnalyticalView($data)
@@ -2013,7 +2063,6 @@ public function getUsersDashboard($userId)
     $menuUserAuthCount = $this->usermodel->getMenuUserAuthsCount($userId);
     
     $usersData = $this->usermodel->getUserByUid($userId);
-    // print_r($usersData);die;
     if($usersData->initial_auth_level == 9)
     {
         $result = $this->getVisualMetric();
@@ -2026,19 +2075,18 @@ public function getUsersDashboard($userId)
     }
     else
     {
-          $decryptedData = $this->decryptRowForSpecificColumns($usersData,['username','email','first_name','last_name','company','phone']);
-          unset($decryptedData->password);
-          unset($decryptedData->activation_selector);
-          unset($decryptedData->forgotten_password_selector);
-          unset($decryptedData->forgotten_password_code);
-          unset($decryptedData->forgotten_password_time);
-          unset($decryptedData->remember_selector);
-          unset($decryptedData->remember_code);
-          unset($decryptedData->activation_code);
+          unset($usersData->password);
+          unset($usersData->activation_selector);
+          unset($usersData->forgotten_password_selector);
+          unset($usersData->forgotten_password_code);
+          unset($usersData->forgotten_password_time);
+          unset($usersData->remember_selector);
+          unset($usersData->remember_code);
+          unset($usersData->activation_code);
         
-          $lastLoginAttemptsHistoryData = $this->usermodel->getUsersLastLoginAttemptsHistoryData($this->encryptValue($decryptedData->email));
-          $decryptedData->last_login_details = $this->decryptResultArray($lastLoginAttemptsHistoryData,['login_user_id']);
-          return $decryptedData;
+          $lastLoginAttemptsHistoryData = $this->usermodel->getUsersLastLoginAttemptsHistoryData($usersData->email);
+          $usersData->last_login_details = $this->decryptResultArray($lastLoginAttemptsHistoryData,['login_user_id','browser_details']);
+          return $usersData;
     }
 }
 
@@ -2100,7 +2148,7 @@ public function addLoginAttemptsHistory($email,$ipAddress,$userAgent,$isSuccess)
                 'browser_details'=>$userAgent,
                 'is_success'=>$isSuccess
         );
-        $data = $this->encryptRow($data,['login_user_id']);
+        $data = $this->encryptRow($data,['login_user_id','browser_details']);
         $query = $this->db->table('login_attempts_history');
         return $query->insert($data);
 }
@@ -2124,6 +2172,74 @@ public function updateApiUrlEndPoints($code,$data)
         ->where('code',$code)
         ->update($encryptData); 
         return true;
+}
+
+
+public function getUserAuths($userId)
+{
+        $userAuthsData = $this->usermodel->getUserAuthsData($userId); 
+        
+        foreach($userAuthsData as $key => $value)
+        {
+            $value->level = $this->decodeAuthLevel($value->level);;
+        }
+
+        $finalData = $this->decryptResult($userAuthsData,['main_menu_name','sub_menu_name']);
+        return $finalData;
+}
+
+
+
+public function getUserAllAnalyticalViews($data)
+{
+    $mainMenuData = $this->usermodel->getMainMenuListData();
+    $mainMenuArrayForCheck = array_column($mainMenuData,'code','name');
+    $mainMenuArray = array_flip($mainMenuArrayForCheck);
+
+    $visualMetricData = $this->usermodel->getVisualMetricData();
+    $visualMetricArrayForCheck = array_column($visualMetricData,'code','visual_name');
+    $visualMetricArray = array_flip($visualMetricArrayForCheck);
+
+    $visualMetricMenuModulesData = $this->usermodel->getVisualMetricsMenuModulesDataByUid($data);
+  
+     foreach($visualMetricMenuModulesData as $key => $value)
+     {
+        if(in_array($value->menu_code,$mainMenuArrayForCheck))
+        {
+            $value->menu_main_name = $this->decryptValue($mainMenuArray[$value->menu_code]);
+        }
+        if(in_array($value->visual_code,$visualMetricArrayForCheck))
+        {
+            $value->visual_name = $this->decryptValue($visualMetricArray[$value->visual_code]);
+        }    
+        $value->user_name = $this->decryptValue($value->user_name);      
+     }
+
+   return $visualMetricMenuModulesData;
+}
+
+
+public function changeUsersVisualMetricStatus($userId,$menuCode,$analyticalCode,$data)
+{
+    $response = [];
+    $updateData = array(
+        'updated_by'=>$data['logged_in_user'],
+        'is_enabled'=>$data['status']
+    );
+    $result = $this->usermodel->changeUsersVisualMetricStatus($userId,$menuCode,$analyticalCode,$updateData);
+    if($result)
+    {
+        $response['response'] = true;
+    }
+    else
+    {
+        $response['message'] = "Failed in changing status";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    return $response;
 }
 
 
@@ -2209,6 +2325,13 @@ public function verify_testertoken_sessiontoken_checktimeout($testerTokenEmailHe
     //   print_r($finalResponse);
     //   die;
     return $finalResponse;
+}
+
+
+public function filteredUserExists($email)
+{
+    // echo "filteredUserExists";die;
+    $this->usermodel->filteredUserExists($this->encryptValue($email));
 }
 
 

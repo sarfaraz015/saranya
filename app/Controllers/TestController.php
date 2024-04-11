@@ -278,6 +278,27 @@ public function testBaseUrl()
 }
 
 
+public function encryptTest()
+{
+    // echo "encryptTest";
+    $json_data = $this->request->getJSON();
+    print_r($json_data);
+    
+    die;
+}
+
+
+public function testLogin()
+{
+    return $this->response->setJSON(['message'=>"Testing testLogin"]);
+}
+
+public function testAbout()
+{
+    return $this->response->setJSON(['message'=>"Testing testAbout"]);
+}
+
+
 
 
 

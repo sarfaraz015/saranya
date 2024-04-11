@@ -67,6 +67,10 @@ $routes->get('/get_main_menu_list', 'UserController::get_main_menu_list');
 $routes->get('/get_user_dashboard', 'UserController::get_user_dashboard');
 $routes->get('/get_himalaya_master_data_count', 'UserController::get_himalaya_master_data_count');
 $routes->get('/get_user_types_list', 'UserController::get_user_types_list');
+$routes->post('/get_user_auths', 'UserController::get_user_auths');
+$routes->post('/get_user_all_analytical_views', 'UserController::get_user_all_analytical_views');
+$routes->post('/change_users_visual_metric_status', 'UserController::change_users_visual_metric_status');
+
 
 
 
@@ -88,6 +92,14 @@ $routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_a
 
 // ################## TESTING URLS ###########################
 
+$routes->post('/testAbout', 'TestController::testAbout');
+
+$routes->post('/testLogin', 'TestController::testLogin',['filter' => 'LoginFilter']);
+
+
+$routes->get('/encryptTest', 'TestController::encryptTest');
+
+
 $routes->get('/encrypt_all_tables', 'UserController::encrypt_all_tables');
 $routes->get('/decrypt_all_tables', 'UserController::decrypt_all_tables');
 
@@ -103,11 +115,6 @@ $routes->get('/decrypt_user_types_table', 'UserController::decrypt_user_types_ta
 
 $routes->get('/encrypt_visual_metrics_table', 'UserController::encrypt_visual_metrics_table');
 $routes->get('/decrypt_visual_metrics_table', 'UserController::decrypt_visual_metrics_table');
-
-
-
-
-
 
 
 $routes->get('/get_users_auth_template_list_test', 'UserController::get_users_auth_template_list_test');

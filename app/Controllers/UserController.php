@@ -29,6 +29,7 @@ class UserController extends BaseController
            $this->userlibrary = new UserLibrary();
            $this->dataHandler = new SecureDataHandler($secret_key, $salt);
            $this->tester = new Tester();
+        //    $this->running();
     }
     public function index()
     {
@@ -40,6 +41,10 @@ class UserController extends BaseController
         return $this->response->setJSON(["message"=>"Calling Test api from Usercontroller"])->setStatusCode(200);
     }
 
+    public function running()
+    {
+        echo "hello running";
+    }
 
  ################################### INNER METHODS #############################   
 public function generateUserId()
@@ -262,6 +267,119 @@ public function testerToken()
 ####################################  USERS FUNCTION ############################
 
 // Handled encryption
+// Working method just commented to improve code quality
+// public function register_xxx()
+// {
+//     if ($this->request->getMethod() === 'post') 
+//     {
+//         $finalResponse = '';
+//         $response = [];
+//         $errorCode = '';
+        
+//         $rules = [
+//             'email'=>'required|valid_email',
+//             'password'=>'required',
+//             'password_confirm'=>'required|matches[password]',
+//             'first_name'=>'required',
+//             'last_name'=>'required',
+//             'company'=>'required',
+//             'phone'=>'required',
+//             'user_type'=>'required'
+//         ];
+    
+//         if(!$this->validate($rules))
+//         {
+//             $response['message'] = $this->validator->getErrors();
+//             $response['response'] = false;
+//             $response['code'] = 401;
+//             $response['result_data'] = [];
+//             $inputData = $this->request->getJSON();
+//             unset($inputData->password);
+//             unset($inputData->password_confirm);
+//             $response['return_data'] = $inputData;
+
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($finalResponse);
+//         }
+    
+//             $json_data = $this->request->getJSON();
+//             $email = trim($json_data->email);
+
+//             if(!$this->userlibrary->checkUserAlreadyExists($email))
+//             {
+//                 $uid = $this->generateUserId();
+//                 $password = trim($json_data->password);
+//                 $first_name = trim($json_data->first_name);
+//                 $last_name = trim($json_data->last_name);
+//                 $company = trim($json_data->company);
+//                 $phone = trim($json_data->phone);
+//                 $user_type = trim($json_data->user_type);
+
+//                 $data = array(
+//                     'uid' =>$uid,
+//                     'ip_address'=>$this->request->getIPAddress(),
+//                     'username'=>$json_data->first_name.$json_data->last_name,
+//                     'password'=>password_hash($password,PASSWORD_DEFAULT),
+//                     'email'=>$email,
+//                     'created_on'=>time(),
+//                     'active'=>1,
+//                     'first_name'=>$first_name,
+//                     'last_name'=>$last_name,
+//                     'company'=>$company,
+//                     'phone'=>$phone,
+//                     'user_type'=>$user_type
+//                 );
+
+//                 if($this->userlibrary->registerUser($data))
+//                 {
+//                     $setDefaultResponse = $this->userlibrary->setDefaultMenuUserAuthsPermissions($uid);
+//                     if($setDefaultResponse['response'])
+//                     {
+//                         $response['message'] = "User registered successfully";
+//                         $response['response'] = true;
+//                         $response['code'] = 200;
+//                         $response['result_data'] = [];
+//                         $response['return_data'] = []; 
+//                     }
+//                     else
+//                     {
+//                         $response['message'] = $setDefaultResponse['message'];
+//                         $response['response'] = $setDefaultResponse['response'];
+//                         $response['code'] = $setDefaultResponse['code'];
+//                         $response['result_data'] = $setDefaultResponse['result_data'];
+//                         $response['return_data'] = $setDefaultResponse['return_data']; 
+//                     }
+                  
+//                 }
+//                 else
+//                 {
+//                         $response['message'] = "Something went wrong while registration";
+//                         $response['response'] = false;
+//                         $response['code'] = 401;
+//                         $response['result_data'] = [];
+//                         $response['return_data'] = $data; 
+//                 }
+//             }
+//             else
+//             {
+//                     $response['message'] = "User already exists in the database";
+//                     $response['response'] = false;
+//                     $response['code'] = 401;
+//                     $response['result_data'] = [];
+//                     $inputData = $this->request->getJSON();
+//                     unset($inputData->password);
+//                     unset($inputData->password_confirm);
+//                     $response['return_data'] = $inputData;
+//             }
+
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($finalResponse);
+    
+//     } 
+    
+
+// }
+
 public function register()
 {
     if ($this->request->getMethod() === 'post') 
@@ -373,6 +491,8 @@ public function register()
     
 
 }
+
+
 
 // Done with encryption
 public function login()
@@ -1652,7 +1772,7 @@ public function get_user_profile_img()
             {
                 return redirect()->route('logout');
             }
-            $decryptedUserData = $this->userlibrary->decryptRowForSpecificColumns($result,['first_name']);
+            $decryptedUserData = $this->userlibrary->decryptRow($result,['first_name']);
             $response['message']= "User profile pic";
             $response['code']= 200;
             $response['response']=true;
@@ -3470,10 +3590,11 @@ public function get_user_dashboard()
             }
             
             $resultData = $this->userlibrary->getUsersDashboard($uid);
+            // print_r($resultData);die;
             $response['message']= "Get user dashboard data";
             $response['code']= 200;
             $response['response']=true;
-            $response['result_data'] = $this->userlibrary->decryptResult($resultData,['visual_name','visual_description']);
+            $response['result_data'] = is_array($resultData)?$this->userlibrary->decryptResult($resultData,['visual_name','visual_description']):$this->userlibrary->decryptRow($resultData,['visual_name','visual_description','username','email','first_name','last_name','company','phone']);
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
@@ -3525,198 +3646,574 @@ public function get_user_types_list()
 }
 
 
+public function get_user_auths()
+{
+    $byPass = false;
+    $tester_token = '';
+    $finalResponse = '';
+    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
+    {
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+
+            
+        $rules = [
+            'user_id'=>'required',
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['message'] = $this->validator->getErrors();
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
+        }
+    
+                $json_data = $this->request->getJSON();
+        
+                $user_id=trim($json_data->user_id);
+           
+
+            $resultData = $this->userlibrary->getUserAuths($user_id);
+            $response['message']= "User auths";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $resultData;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
+
+}
+
+
+public function get_user_all_analytical_views()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
+        $checkTimeoutStatus = true;
+        if(!$byPass)
+        {
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+        }
+        
+        if(!$checkTimeoutStatus)
+        {
+            return redirect()->to($logoutUrl);
+        }
+
+        $rules = [
+            'user_id'=>'required'
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['message'] = $this->validator->getErrors();
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
+        }
+    
+        $json_data = $this->request->getJSON();
+
+        $data = array(
+            'user_id'=>$json_data->user_id,
+        );
+        
+        $userResponse = $this->userlibrary->getUserAllAnalyticalViews($data);
+        
+            $response['message'] = "Get single user all analytical report";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = $userResponse;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+     
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
+    }
+
+}
+
+
+public function change_users_visual_metric_status()
+{
+    if ($this->request->getMethod() === 'post') 
+    {
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
+        $checkTimeoutStatus = true;
+        if(!$byPass)
+        {
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+        }
+        
+        if(!$checkTimeoutStatus)
+        {
+            return redirect()->to($logoutUrl);
+        }
+
+        $rules = [
+            'user_id'=>'required',
+            'menu_code'=>'required',
+            'analytical_code'=>'required'
+        ];
+    
+        if(!$this->validate($rules))
+        {
+            $response['message'] = $this->validator->getErrors();
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $inputData = $this->request->getJSON();
+            $response['return_data'] = $inputData;
+
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($finalResponse);
+        }
+    
+        $json_data = $this->request->getJSON();
+
+        $data = array(
+            'logged_in_user'=>$uid,
+            'status'=>$json_data->status?1:0
+        );
+    
+        $responseResult = $this->userlibrary->changeUsersVisualMetricStatus($json_data->user_id,$json_data->menu_code,$json_data->analytical_code,$data);
+        
+           if($responseResult['response'])
+           {
+                $response['message'] = "Visual metric status changed successfully";
+                $response['code'] = 200;
+                $response['response'] = true;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+           }
+           else
+           {
+                $response['message'] = $responseResult['message'];
+                $response['code'] = $responseResult['code'];
+                $response['response'] = $responseResult['response'];
+                $response['result_data'] = $responseResult['result_data'];
+                $response['return_data'] = $responseResult['return_data'];
+           }
+            
+     
+        $finalResponse = $this->userlibrary->generateResponse($response);
+        return $this->response->setJSON($finalResponse);
+    }
+
+}
+
 
 ################################ TESTING METHODS #######################
 
 
 // Working Method
-// public function encrypt_all_tables()
-// {
-//     // Table users : 
-//     $usersResult = $this->usermodel->getAllUsersTableData();
-//     $encryptedUsersResult = $this->userlibrary->encryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
-//     $this->usermodel->updateUsersTableBatch($encryptedUsersResult);
+public function encrypt_all_tables()
+{
+    die;
+    // Table users : 
+    $usersResult = $this->usermodel->getAllUsersTableData();
+    $encryptedUsersResult = $this->userlibrary->encryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
+    $this->usermodel->updateUsersTableBatch($encryptedUsersResult);
 
-//     // Table address_book
-//     $addressBookResult = $this->usermodel->getAddressBookTableData();
-//     $finalAddressBookResult = $this->userlibrary->encryptResult($addressBookResult,['name','address_1','address_2','state','city']);
-//     $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
+    // Table address_book
+    $addressBookResult = $this->usermodel->getAddressBookTableData();
+    $finalAddressBookResult = $this->userlibrary->encryptResult($addressBookResult,['name','address_1','address_2','state','city']);
+    $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
 
-//     // Table  address_book_connect
+    // Table  address_book_connect
 
-//      $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData();
-//     $finalAddressBookConnectResult = $this->userlibrary->encryptResult($addressBookConnectResult,['email','phone']);
-//     $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
+     $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData();
+    $finalAddressBookConnectResult = $this->userlibrary->encryptResult($addressBookConnectResult,['email','phone']);
+    $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
 
-//     // Table  api_request_type
+    // Table  api_request_type
 
-//     $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData();
-//     $finalApiRequestTypeResult = $this->userlibrary->encryptResult($apiRequestTypeResult,['api_request_type']);
-//     $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
+    $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData();
+    $finalApiRequestTypeResult = $this->userlibrary->encryptResult($apiRequestTypeResult,['api_request_type']);
+    $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
 
       
-//     // Table api_url_endpoints
+    // Table api_url_endpoints
 
-//     $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
-//     $finalApiUrlEndpointsResult = $this->userlibrary->encryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
-//     $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
+    $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
+    $finalApiUrlEndpointsResult = $this->userlibrary->encryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+    $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
 
-//     // login_attempts_history
+    // login_attempts_history
 
-//     $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
-//     $finalLoginAttemptsHistoryResult = $this->userlibrary->encryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
-//     $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
+    $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
+    $finalLoginAttemptsHistoryResult = $this->userlibrary->encryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
+    $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
 
-//     // menu_main_modules
+    // menu_main_modules
 
-//     $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
-//     $finalMenuMainModulesResult = $this->userlibrary->encryptResult($menuMainModulesResult,['name','description','icon_name','link']);
-//     $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
+    $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
+    $finalMenuMainModulesResult = $this->userlibrary->encryptResult($menuMainModulesResult,['name','description','icon_name','link']);
+    $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
 
-//     // menu_sub_modules
+    // menu_sub_modules
 
-//     $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
-//     $finalMenuSubModulesResult = $this->userlibrary->encryptResult($menuSubModulesResult,['name','description','icon_name']);
-//     $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
-
-
-//     // users_auth_template_names
-
-//     $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
-//     $finalUsersAuthTemplateNamesResult = $this->userlibrary->encryptResult($usersAuthTemplateNamesResult,['name','remarks']);
-//     $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
-
-//     // users_log_history
-
-//     $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
-//     $finalUsersLoginHistoryResult = $this->userlibrary->encryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
-//     $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
+    $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
+    $finalMenuSubModulesResult = $this->userlibrary->encryptResult($menuSubModulesResult,['name','description','icon_name']);
+    $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
 
 
-//      // users_otp
-//     $usersOtpResult = $this->usermodel->getUsersOtpTableData();
-//     $finalUsersOtpResult = $this->userlibrary->encryptResult($usersOtpResult,['email']);
-//     $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
+    // users_auth_template_names
 
-//     // user_profile_change_history
+    $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
+    $finalUsersAuthTemplateNamesResult = $this->userlibrary->encryptResult($usersAuthTemplateNamesResult,['name','remarks']);
+    $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
 
-//     $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
-//     $finalUserProfileChangeHistoryResult = $this->userlibrary->encryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
-//     $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
+    // users_log_history
 
-
-//     // user_types
-
-//     $userTypesResult = $this->usermodel->getAllUserTypesTableData();
-//     $finalUserTypesResult = $this->userlibrary->encryptResult($userTypesResult,['short_name','remarks']);
-//     $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
+    $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
+    $finalUsersLoginHistoryResult = $this->userlibrary->encryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
+    $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
 
 
-//         // visual_metrics
+     // users_otp
+    $usersOtpResult = $this->usermodel->getUsersOtpTableData();
+    $finalUsersOtpResult = $this->userlibrary->encryptResult($usersOtpResult,['email']);
+    $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
 
-//         $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
-//         $finalVisualMetricsResult = $this->userlibrary->encryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
-//         $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+    // user_profile_change_history
 
-//     die;
-// }
+    $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
+    $finalUserProfileChangeHistoryResult = $this->userlibrary->encryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
+    $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
+
+
+    // user_types
+
+    $userTypesResult = $this->usermodel->getAllUserTypesTableData();
+    $finalUserTypesResult = $this->userlibrary->encryptResult($userTypesResult,['short_name','remarks']);
+    $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
+
+
+        // visual_metrics
+
+        $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
+        $finalVisualMetricsResult = $this->userlibrary->encryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
+        $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+
+    die;
+}
 
 
 // Working Method
-// public function decrypt_all_tables()
-// {
-//     // Table users : 
-//     $usersResult = $this->usermodel->getAllUsersTableData();
-//     $decryptedUsersResult = $this->userlibrary->decryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
-//     $this->usermodel->updateUsersTableBatch($decryptedUsersResult);
+public function decrypt_all_tables()
+{
+    die;
+    // Table users : 
+    $usersResult = $this->usermodel->getAllUsersTableData();
+    $decryptedUsersResult = $this->userlibrary->decryptResult($usersResult,['username','email','first_name','last_name','company','phone']);
+    $this->usermodel->updateUsersTableBatch($decryptedUsersResult);
 
-//     //    Table address_book
-//        $addressBookResult = $this->usermodel->getAddressBookTableData(); 
-//        $finalAddressBookResult = $this->userlibrary->decryptResult($addressBookResult,['name','address_1','address_2','state','city']);
-//        $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
+    //    Table address_book
+       $addressBookResult = $this->usermodel->getAddressBookTableData(); 
+       $finalAddressBookResult = $this->userlibrary->decryptResult($addressBookResult,['name','address_1','address_2','state','city']);
+       $this->usermodel->updateAddressBookTableBatch($finalAddressBookResult);
 
-//     // Table  address_book_connect
-//         $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData(); 
-//        $finalAddressBookConnectResult = $this->userlibrary->decryptResult($addressBookConnectResult,['email','phone']);
-//        $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
+    // Table  address_book_connect
+        $addressBookConnectResult = $this->usermodel->getAddressBookConnectTableData(); 
+       $finalAddressBookConnectResult = $this->userlibrary->decryptResult($addressBookConnectResult,['email','phone']);
+       $this->usermodel->updateAddressBookConnectTableBatch($finalAddressBookConnectResult);
 
-//     // Table  api_request_type
+    // Table  api_request_type
 
-//         $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData(); 
-//        $finalApiRequestTypeResult = $this->userlibrary->decryptResult($apiRequestTypeResult,['api_request_type']);
-//        $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
-
-
-//     //  Table api_url_endpoints
-
-//      $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
-//      $finalApiUrlEndpointsResult = $this->userlibrary->decryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
-//      $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
-
-//     // login_attempts_history
-
-//     $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
-//     $finalLoginAttemptsHistoryResult = $this->userlibrary->decryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
-//     $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
+        $apiRequestTypeResult = $this->usermodel->getApiRequestTypeTableData(); 
+       $finalApiRequestTypeResult = $this->userlibrary->decryptResult($apiRequestTypeResult,['api_request_type']);
+       $this->usermodel->updateApiRequestTypeTableBatch($finalApiRequestTypeResult);
 
 
-//     // menu_main_modules
+    //  Table api_url_endpoints
 
-//     $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
-//     $finalMenuMainModulesResult = $this->userlibrary->decryptResult($menuMainModulesResult,['name','description','icon_name','link']);
-//     $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
+     $apiUrlEndpointsResult = $this->usermodel->getApiUrlEndpointsTableData();
+     $finalApiUrlEndpointsResult = $this->userlibrary->decryptResult($apiUrlEndpointsResult,['api_url','api_endpoint','description','request','response_success','header_request','response_error']);
+     $this->usermodel->updateApiUrlEndpointsTableBatch($finalApiUrlEndpointsResult);
+
+    // login_attempts_history
+
+    $loginAttemptsHistoryResult = $this->usermodel->getLoginAttemptsHistoryTableData();
+    $finalLoginAttemptsHistoryResult = $this->userlibrary->decryptResult($loginAttemptsHistoryResult,['login_user_id','browser_details']);
+    $this->usermodel->updateLoginAttemptsHistoryTableBatch($finalLoginAttemptsHistoryResult);
+
+
+    // menu_main_modules
+
+    $menuMainModulesResult = $this->usermodel->getAllMenuMainModulesTableData();
+    $finalMenuMainModulesResult = $this->userlibrary->decryptResult($menuMainModulesResult,['name','description','icon_name','link']);
+    $this->usermodel->updateMenuMainModulesTableBatch($finalMenuMainModulesResult);
      
 
-//     // menu_sub_modules
+    // menu_sub_modules
 
-//     $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
-//     $finalMenuSubModulesResult = $this->userlibrary->decryptResult($menuSubModulesResult,['name','description','icon_name']);
-//     $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
-
-
-
-//     // users_auth_template_names
-
-//      $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
-//     $finalUsersAuthTemplateNamesResult = $this->userlibrary->decryptResult($usersAuthTemplateNamesResult,['name','remarks']);
-//     $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
-
-
-//     // users_log_history
-
-//     $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
-//     $finalUsersLoginHistoryResult = $this->userlibrary->decryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
-//     $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
-
-//     // users_otp
-
-//        $usersOtpResult = $this->usermodel->getUsersOtpTableData();
-//     $finalUsersOtpResult = $this->userlibrary->decryptResult($usersOtpResult,['email']);
-//     $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
-
-//     // user_profile_change_history
-
-//         $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
-//     $finalUserProfileChangeHistoryResult = $this->userlibrary->decryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
-//     $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
-
-
-//     //  user_types
-
-//     $userTypesResult = $this->usermodel->getAllUserTypesTableData();
-//     $finalUserTypesResult = $this->userlibrary->decryptResult($userTypesResult,['short_name','remarks']);
-//     $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
+    $menuSubModulesResult = $this->usermodel->getAllMenuSubModulesTableData();
+    $finalMenuSubModulesResult = $this->userlibrary->decryptResult($menuSubModulesResult,['name','description','icon_name']);
+    $this->usermodel->updateMenuSubModulesTableBatch($finalMenuSubModulesResult);
 
 
 
-//     // visual_metrics
+    // users_auth_template_names
 
-//     $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
-//     $finalVisualMetricsResult = $this->userlibrary->decryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
-//     $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+     $usersAuthTemplateNamesResult = $this->usermodel->getUsersAuthTemplateNamesTableData();
+    $finalUsersAuthTemplateNamesResult = $this->userlibrary->decryptResult($usersAuthTemplateNamesResult,['name','remarks']);
+    $this->usermodel->updateUsersAuthTemplateNamesTableBatch($finalUsersAuthTemplateNamesResult);
 
-//     die;
-// }
+
+    // users_log_history
+
+    $usersLoginHistorysResult = $this->usermodel->getUsersLoginHistoryTableData();
+    $finalUsersLoginHistoryResult = $this->userlibrary->decryptResult($usersLoginHistorysResult,['called_class','called_method','called_api','user_agent','user_input_data','user_response_data']);
+    $this->usermodel->updateUsersLoginHistoryTableBatch($finalUsersLoginHistoryResult);
+
+    // users_otp
+
+       $usersOtpResult = $this->usermodel->getUsersOtpTableData();
+    $finalUsersOtpResult = $this->userlibrary->decryptResult($usersOtpResult,['email']);
+    $this->usermodel->updateUsersOtpTableBatch($finalUsersOtpResult);
+
+    // user_profile_change_history
+
+        $userProfileChangeHistoryResult = $this->usermodel->getUserProfileChangeHistoryTableData();
+    $finalUserProfileChangeHistoryResult = $this->userlibrary->decryptResult($userProfileChangeHistoryResult,['username','email','phone','company','first_name','last_name']);
+    $this->usermodel->updateUserProfileChangeHistoryTableBatch($finalUserProfileChangeHistoryResult);
+
+
+    //  user_types
+
+    $userTypesResult = $this->usermodel->getAllUserTypesTableData();
+    $finalUserTypesResult = $this->userlibrary->decryptResult($userTypesResult,['short_name','remarks']);
+    $this->usermodel->updateUserTypesTableBatch($finalUserTypesResult);
+
+
+
+    // visual_metrics
+
+    $visualMetricsResult = $this->usermodel->getAllVisualMetricsTableData(); 
+    $finalVisualMetricsResult = $this->userlibrary->decryptResult($visualMetricsResult,['visual_name','visual_description','data_set']);
+    $this->usermodel->updateVisualMetricsTableBatch($finalVisualMetricsResult);
+
+    die;
+}
 
 
 
