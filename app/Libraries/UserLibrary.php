@@ -2243,7 +2243,170 @@ public function changeUsersVisualMetricStatus($userId,$menuCode,$analyticalCode,
 }
 
 
-// ######################## TESTING METHODS ######################
+public function getProjectAccessToken()
+{
+		$finalKey = '';
+		$bytes = random_bytes(32);
+
+        $numbersKeys = bin2hex($bytes);
+		$alphabetsKeys = "abcdefghijklmnopqrstuvwxyz";
+		
+		$finalKey = $numbersKeys.$alphabetsKeys;
+
+		$accessToken = substr(str_shuffle($finalKey),0,40);
+		return $accessToken;
+}
+
+public function getUserAccessToken()
+{
+		$finalKey = '';
+		$bytes = random_bytes(32);
+
+        $numbersKeys = bin2hex($bytes);
+		$alphabetsKeys = "abcdefghijklmnopqrstuvwxyz";
+		
+		$finalKey = $numbersKeys.$alphabetsKeys;
+
+		$accessToken = substr(str_shuffle($finalKey),0,38).'ur';
+		return $accessToken;
+}
+
+
+public function generateProjectAccessKey($projectCode,$data)
+{
+    $response = [];
+
+    if($this->usermodel->checkProjectAccessKeyExists($projectCode)){
+        $response['message'] = "Project access key already exists";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        return $response;
+    }
+ 
+    $projectAccessKey = $this->getProjectAccessToken();
+    $data['access_token'] = $projectAccessKey;
+    
+    $status = $this->usermodel->updateIntoProjects($projectCode,$data);
+    if($status)
+    {
+        $response['message'] = "Project access key generated successfully";
+        $response['code'] = 200;
+        $response['response'] = true;
+        $response['result_data'] = ["project_access_key"=>$projectAccessKey];
+        $response['return_data'] = [];
+    }
+    else
+    {
+        $response['message'] = "Project access key generation failed";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    return $response;
+    
+}
+
+public function generateUserAccessKey($data)
+{
+    $response = [];
+
+    if($this->usermodel->checkUserAccessTokenExistsForProject($data['user_id'],$data['project_code']))
+    {
+        $response['message'] = "User access token already exists for this user for project";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        return $response;
+    }
+
+    $code = $this->generateStringCode();
+    $getUserAccessToken = $this->getUserAccessToken();
+    $data['code'] = $code;
+    $data['access_token'] = $getUserAccessToken;
+
+    $status = $this->usermodel->insertIntoUserProjAccessToken($data);
+   
+    if($status)
+    {
+        $response['message'] = "User access key generated successfully";
+        $response['code'] = 200;
+        $response['response'] = true;
+        $response['result_data'] = ["user_access_key"=>$getUserAccessToken];
+        $response['return_data'] = [];
+    }
+    else
+    {
+        $response['message'] = "User access key generation failed";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    return $response;
+
+}
+
+
+public function getAllProjectsList()
+{
+    $projectsData = $this->usermodel->getAllProjectsList();
+    $decryptedData = $this->decryptResult($projectsData,['name','remarks']);
+    $finalData = $this->getSpecificColumnsFromResult($decryptedData,['id','code','name','remarks']);
+    return $finalData;
+}
+
+public function createProject($data)
+{
+    $response = [];
+
+    if($this->usermodel->checkProjectExists($data['name']))
+    {
+        $response['message'] = "Project already exists";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        return $response;
+    }
+
+    $code = $this->generateStringCode();
+    $data['code'] = $code;
+
+    $status = $this->usermodel->insertIntoProjects($data);
+    if($status)
+    {
+        $response['message'] = "Project created successfully";
+        $response['code'] = 200;
+        $response['response'] = true;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    else
+    {
+        $response['message'] = "Project creation fail";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    return $response;
+}
+
+
+public function userAssignApi($data)
+{
+    
+}
+
+
+
+// ######################## TESTING AREA ######################
+
+
 
 public function testerTokenVerification($testerTokenEmailHeader,$testerTokenAuthorizationHeader)
 {

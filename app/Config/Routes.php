@@ -71,8 +71,13 @@ $routes->post('/get_user_auths', 'UserController::get_user_auths');
 $routes->post('/get_user_all_analytical_views', 'UserController::get_user_all_analytical_views');
 $routes->post('/change_users_visual_metric_status', 'UserController::change_users_visual_metric_status');
 
+$routes->post('/generate_project_access_key', 'UserController::generate_project_access_key');
+$routes->post('/generate_user_access_key', 'UserController::generate_user_access_key');
+$routes->get('/get_all_projects_list', 'UserController::get_all_projects_list');
 
+$routes->post('/create_project', 'UserController::create_project');
 
+$routes->post('/user_assign_api', 'UserController::user_assign_api');
 
 // #################### ApiController ###################
 

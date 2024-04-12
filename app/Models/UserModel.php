@@ -918,6 +918,92 @@ public function changeUsersVisualMetricStatus($userId,$menuCode,$analyticalCode,
         return true; 
 }
 
+public function insertIntoProjects($data)
+{
+        $this->db->table('projects')
+                   ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
+
+public function updateIntoProjects($projectCode,$data)
+{
+        $id = $this->db->table('projects')
+        ->where('code', $projectCode)
+        ->update($data);
+        return $id; 
+}
+
+public function checkProjectExists($projectName)
+{
+        $result = $this->db->table('projects')
+        ->where('name', $projectName)
+        ->get()
+        ->getRow();
+        if($result)
+        {
+                return true;
+        }
+        else
+        {
+                return false;
+        }
+}
+
+
+public function insertIntoUserProjAccessToken($data)
+{
+        $this->db->table('user_proj_access_token')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID; 
+}
+
+public function checkUserAccessTokenExistsForProject($userId,$projectId)
+{
+      $result = $this->db->table('user_proj_access_token')
+        ->where('user_id', $userId)
+        ->where('project_code', $projectId)
+        ->get()
+        ->getRow();
+         
+     if($result)
+     {
+        return true;
+     }          
+     else{
+         return false;
+     }
+}
+
+
+
+public function getAllProjectsList()
+{
+        $result = $this->db->table('projects')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+
+public function checkProjectAccessKeyExists($projectCode)
+{
+        $result = $this->db->table('projects')  
+        ->where('code',$projectCode)
+        ->get()
+        ->getRow();
+        if($result->access_token==''){
+                return false;
+        }
+        else{
+                return true;
+        }
+}
+
+
+
+
 
 
 ############################ TESTING AREA #########################################
