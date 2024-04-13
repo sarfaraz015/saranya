@@ -2501,8 +2501,7 @@ public function getUserIdByToken($token)
         $finalArray['uid'] = $result->user_id;
         $finalArray['byPass'] = true;
     }
-
-    // print_r($finalArray);die;
+    
     return $finalArray;
 }
 

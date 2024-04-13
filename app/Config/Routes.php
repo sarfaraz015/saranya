@@ -18,10 +18,7 @@ $routes->get('/test', 'UserController::test');
 $routes->post('/register', 'UserController::register');
 $routes->post('/login', 'UserController::login');
 $routes->get('/logout', 'UserController::logout');
-// $routes->get('/get_user_data', 'UserController::get_user_data');
 $routes->get('/get_user_data', 'UserController::get_user_data',['filter' => 'ValidateUserAuthentication']);
-// $filters = ['ValidateUserAuthentication', 'CheckUsersTimeOut'];
-// $routes->get('/get_user_data', 'UserController::get_user_data', ['filter' => $filters]);
 $routes->get('/testcode', 'UserController::testcode');
 $routes->get('/blockUserMessage', 'UserController::blockUserMessage');
 $routes->get('/testMessage', 'UserController::testMessage');
@@ -41,59 +38,59 @@ $routes->get('/about', 'UserController::about');
 $routes->get('/contact', 'UserController::contact');
 $routes->get('/chekApiHitTimings', 'UserController::chekApiHitTimings');
 
-$routes->post('/get_all_users', 'UserController::get_all_users');
-$routes->post('/update_user', 'UserController::update_user');
+$routes->post('/get_all_users', 'UserController::get_all_users',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/update_user', 'UserController::update_user',['filter' => 'ValidateUserAuthentication']);
 $routes->post('/test_get_users', 'UserController::test_get_users');
 
 // $routes->post('/get_all_filtered_users', 'UserController::get_all_filtered_users');
 $routes->get('/checkQueryBuilder', 'UserController::checkQueryBuilder');
 $routes->get('/getAllUsersForTest', 'UserController::getAllUsersForTest');
 
-$routes->post('/get_main_menu', 'UserController::get_main_menu');
+$routes->post('/get_main_menu', 'UserController::get_main_menu',['filter' => 'ValidateUserAuthentication']);
 $routes->post('/get_main_menu_for_test', 'UserController::get_main_menu_for_test');
 $routes->post('/upload_user_profile_img', 'UserController::upload_user_profile_img');
-$routes->post('/get_user_profile_img', 'UserController::get_user_profile_img');
-$routes->post('/create_user', 'UserController::create_user');
-$routes->post('/create_auth_templete', 'UserController::create_auth_templete');
+$routes->post('/get_user_profile_img', 'UserController::get_user_profile_img',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/create_user', 'UserController::create_user',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/create_auth_templete', 'UserController::create_auth_templete',['filter' => 'ValidateUserAuthentication']);
 $routes->get('/get_all_users_auth_templates', 'UserController::get_all_users_auth_templates');
-$routes->post('/get_main_menu_auth', 'UserController::get_main_menu_auth');
-$routes->get('/get_users_list', 'UserController::get_users_list');
-$routes->get('/get_templates_list', 'UserController::get_templates_list');
-$routes->post('/get_template', 'UserController::get_template');
-$routes->post('/save_user_menu_authentication', 'UserController::save_user_menu_authentication');
-$routes->get('/get_active_users', 'UserController::get_active_users');
+$routes->post('/get_main_menu_auth', 'UserController::get_main_menu_auth',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_users_list', 'UserController::get_users_list',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_templates_list', 'UserController::get_templates_list',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/get_template', 'UserController::get_template',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/save_user_menu_authentication', 'UserController::save_user_menu_authentication',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_active_users', 'UserController::get_active_users',['filter' => 'ValidateUserAuthentication']);
 
-$routes->get('/get_all_visual_metrics', 'UserController::get_all_visual_metrics');
-$routes->post('/update_user_analyticals', 'UserController::update_user_analyticals');
-$routes->post('/get_user_analytical_view', 'UserController::get_user_analytical_view');
-$routes->get('/get_main_menu_list', 'UserController::get_main_menu_list');
-$routes->get('/get_user_dashboard', 'UserController::get_user_dashboard');
-$routes->get('/get_himalaya_master_data_count', 'UserController::get_himalaya_master_data_count');
+$routes->get('/get_all_visual_metrics', 'UserController::get_all_visual_metrics',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/update_user_analyticals', 'UserController::update_user_analyticals',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/get_user_analytical_view', 'UserController::get_user_analytical_view',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_main_menu_list', 'UserController::get_main_menu_list',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_user_dashboard', 'UserController::get_user_dashboard',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_himalaya_master_data_count', 'UserController::get_himalaya_master_data_count',['filter' => 'ValidateUserAuthentication']);
 $routes->get('/get_user_types_list', 'UserController::get_user_types_list');
-$routes->post('/get_user_auths', 'UserController::get_user_auths');
-$routes->post('/get_user_all_analytical_views', 'UserController::get_user_all_analytical_views');
-$routes->post('/change_users_visual_metric_status', 'UserController::change_users_visual_metric_status');
+$routes->post('/get_user_auths', 'UserController::get_user_auths',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/get_user_all_analytical_views', 'UserController::get_user_all_analytical_views',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/change_users_visual_metric_status', 'UserController::change_users_visual_metric_status',['filter' => 'ValidateUserAuthentication']);
 
-$routes->post('/generate_project_access_key', 'UserController::generate_project_access_key');
-$routes->post('/generate_user_access_key', 'UserController::generate_user_access_key');
-$routes->get('/get_all_projects_list', 'UserController::get_all_projects_list');
+$routes->post('/generate_project_access_key', 'UserController::generate_project_access_key',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/generate_user_access_key', 'UserController::generate_user_access_key',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_all_projects_list', 'UserController::get_all_projects_list',['filter' => 'ValidateUserAuthentication']);
 
-$routes->post('/create_project', 'UserController::create_project');
+$routes->post('/create_project', 'UserController::create_project',['filter' => 'ValidateUserAuthentication']);
 
-$routes->post('/user_assign_api', 'UserController::user_assign_api');
+$routes->post('/user_assign_api', 'UserController::user_assign_api',['filter' => 'ValidateUserAuthentication']);
 
 // #################### ApiController ###################
 
 $routes->get('/testApiController', 'ApiController::testApiController');
-$routes->post('/create_api', 'ApiController::create_api');
-$routes->post('/get_all_apis', 'ApiController::get_all_apis');
-$routes->post('/update_api', 'ApiController::update_api');
-$routes->get('/get_address_book_list', 'ApiController::get_address_book_list');
-$routes->get('/get_api_request_type_list', 'ApiController::get_api_request_type_list');
-$routes->post('/get_api_by_id', 'ApiController::get_api_by_id');
-$routes->post('/delete_api', 'ApiController::delete_api');
-$routes->get('/total_api_count', 'ApiController::total_api_count');
-$routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_api_count');
+$routes->post('/create_api', 'ApiController::create_api',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/get_all_apis', 'ApiController::get_all_apis',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/update_api', 'ApiController::update_api',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_address_book_list', 'ApiController::get_address_book_list',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_api_request_type_list', 'ApiController::get_api_request_type_list',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/get_api_by_id', 'ApiController::get_api_by_id',['filter' => 'ValidateUserAuthentication']);
+$routes->post('/delete_api', 'ApiController::delete_api',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/total_api_count', 'ApiController::total_api_count',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_api_count',['filter' => 'ValidateUserAuthentication']);
 
 
 

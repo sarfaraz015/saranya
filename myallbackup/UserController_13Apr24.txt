@@ -734,6 +734,100 @@ public function logout()
 }
 
 
+// Done with encryption
+// Working method
+public function get_user_data_xxx()
+{
+    $byPass = false;
+    $tester_token = '';
+    $finalResponse = '';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
+    {
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->usermodel->getUserDetails($uid);
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->route('logout');
+            }
+            $decryptedUserData = $this->userlibrary->decryptRow($result,['username','email','first_name','last_name','company','phone']);
+            $response['message']= "Single user details";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $decryptedUserData;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
+
+}
+
+
 // Done encryption : filtered
 public function get_user_data()
 {
@@ -772,6 +866,393 @@ public function get_user_data()
     return $this->response->setJSON($finalResponse);
 }
 
+
+
+// Not in use : 
+// public function get_all_users_xxxx()
+// {
+//     $byPass = false;
+//     $tester_token = '';
+//     $finalResponse = '';
+ 
+//       if($this->request->getHeader('testerEmail')!=''){
+//             $response = $this->testerToken();
+//             if(!$this->testerToken()['response'])
+//             {
+//                 return $this->response->setJSON($this->testerToken());
+//             }
+//             else
+//             {
+//                     $byPass = true;
+//                     $tester_token = $this->request->getHeader('Authorization')->getValue();
+//             }
+//       }
+
+//       $response = [];
+//       $errorCode = '';
+  
+//       $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+  
+//       if($token!='')
+//       {
+//           $uid = '';
+//           if($byPass)
+//           {
+//               $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+//           }
+//           else
+//           {
+//               $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+//               $uid = $userdata?$userdata->uid:'';
+//           }
+  
+//           if($uid)
+//           {
+//               $checkTimeoutStatus = true;
+//               if(!$byPass)
+//               {
+//                   $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+//               }
+              
+//               $result = $this->usermodel->getAllUserDetails();
+  
+//               if(!$checkTimeoutStatus)
+//               {
+//                   return redirect()->route('logout');
+//               }
+//               $decryptedUserData = $this->decryptDataResult($result);
+//               $response['message']= "All users details";
+//               $response['result_data']= $decryptedUserData;
+//               $response['return_data'] = [];
+//               $response['response']=true;
+//               $response['code']=true;
+//               $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+//           }
+//           else
+//           {
+//               if($byPass)
+//               {
+//                   $response['message']= "Tester user not registered in our database";
+//                   $response['response']=false;
+//                   $errorCode = 401;
+//               }
+//               else
+//               {
+//                 $response['message']= "Invalid user token";
+//                 $response['response']=false;
+//                 $response['code']= 401;
+//                 $response['result_data'] = [];
+//                 $response['return_data'] = [];
+//               }
+//           }
+//       }
+//       else
+//       {
+//         $response['message']= "No user token found";
+// 		$response['response'] = false;
+//         $response['code']= 401;
+//         $response['result_data'] = [];
+//         $response['return_data'] = [];
+//       }
+  
+//       $finalResponse = $this->userlibrary->generateResponse($response);
+//       return $this->response->setJSON($finalResponse);
+// }
+
+
+// Not in use 
+// public function update_user_xxxx()
+// {
+//     if ($this->request->getMethod() === 'post') 
+//     {
+
+//         $byPass = false;
+//         $tester_token = '';
+//          // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+//         $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+//           if($this->request->getHeader('testerEmail')!=''){
+//                 $response = $this->testerToken();
+//                 if(!$this->testerToken()['response'])
+//                 {
+//                     return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+//                 }
+//                 else
+//                 {
+//                         $byPass = true;
+//                         $tester_token = $this->request->getHeader('Authorization')->getValue();
+//                 }
+//           }
+
+
+//         $response = [];
+//         $errorCode = '';
+//         $finalResponse = '';
+
+//         $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+//         if($token=='')
+//         {
+//             $response['message']= "No user token";
+//             $response['response'] = false;
+//             $response['code'] = 401;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($response);
+//         }
+
+//         $uid = '';
+//         if($byPass)
+//         {
+//             $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+//         }
+//         else
+//         {
+//             $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+//             $uid = $userdata?$userdata->uid:'';
+//         }
+
+//         if($uid=='')
+//         {
+//             if($byPass)
+//             {
+//                 $response['message']= "Tester user not registered in our database";
+//                 $response['response']=false;
+//                 $errorCode = 401;
+//                 return $this->response->setJSON($response)->setStatusCode($errorCode);
+//             }
+//             else
+//             {
+//                 $response['message']= "Invalid user token";
+//                 $response['response']=false;
+//                 $response['code']= 401;
+//                 $response['result_data'] = [];
+//                 $response['return_data'] = [];
+//                 $finalResponse = $this->userlibrary->generateResponse($response);
+//                 return $this->response->setJSON($finalResponse);
+//             } 
+//         }
+        
+//         $checkTimeoutStatus = true;
+//         if(!$byPass)
+//         {
+//             $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+//         }
+        
+//         if(!$checkTimeoutStatus)
+//         {
+//             return redirect()->to($logoutUrl);
+//         }
+
+//         $rules = [
+//             'email'=>'required|valid_email',
+//             'first_name'=>'required',
+//             'last_name'=>'required',
+//             'company'=>'required',
+//             'phone'=>'required',
+//             'profile_img'=>'required'
+//         ];
+    
+//         if(!$this->validate($rules))
+//         {
+//             $response['message'] = $this->validator->getErrors();
+//             $response['response'] = false;
+//             $response['code'] = 401;
+//             $response['result_data'] = [];
+//             $inputData = $this->request->getJSON();
+//             $response['return_data'] = $inputData;
+
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($finalResponse);
+//         }
+    
+//         $json_data = $this->request->getJSON();
+
+//         $data = array(
+//             'uid'=>$uid,
+//             'username'=>trim($json_data->first_name).trim($json_data->last_name),
+//             'email'=>trim($json_data->email),
+//             'first_name'=>trim($json_data->first_name),
+//             'last_name'=>trim($json_data->last_name),
+//             'company'=>trim($json_data->company),
+//             'phone'=>trim($json_data->phone),
+//             'profile_img'=>trim($json_data->profile_img)
+//         );
+
+//         $encryptedData = $this->encryptUserDataForUpdate($data);
+
+//         $rowId = $this->userlibrary->insertUserDataInProfileChangeHistory($uid);
+//         if($rowId)
+//         {
+//             $this->usermodel->updateUserData($encryptedData);
+//             $response['message'] = "Profile updated successfully";
+//             $response['code'] = 200;
+//             $response['response'] = true;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+//         }
+//         else
+//         {
+//             $response['message'] = "Profile Not updated : Reason (error in user profile history)";
+//             $response['code'] = 401;
+//             $response['response'] = false;
+//             $response['result_data'] = [];
+//             $response['return_data'] = $data;
+//         }
+        
+//         $finalResponse = $this->userlibrary->generateResponse($response);
+//         return $this->response->setJSON($finalResponse);
+//     }
+
+// }
+
+
+// public function update_user_xxxx()
+// {
+//     if ($this->request->getMethod() === 'post') 
+//     {
+
+//         $byPass = false;
+//         $tester_token = '';
+//          // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+//         $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+//           if($this->request->getHeader('testerEmail')!=''){
+//                 $response = $this->testerToken();
+//                 if(!$this->testerToken()['response'])
+//                 {
+//                     return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+//                 }
+//                 else
+//                 {
+//                         $byPass = true;
+//                         $tester_token = $this->request->getHeader('Authorization')->getValue();
+//                 }
+//           }
+
+
+//         $response = [];
+//         $errorCode = '';
+//         $finalResponse = '';
+
+//         $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+//         if($token=='')
+//         {
+//             $response['message']= "No user token";
+//             $response['response'] = false;
+//             $response['code'] = 401;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($response);
+//         }
+
+//         $uid = '';
+//         if($byPass)
+//         {
+//             $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+//         }
+//         else
+//         {
+//             $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+//             $uid = $userdata?$userdata->uid:'';
+//         }
+
+//         if($uid=='')
+//         {
+//             if($byPass)
+//             {
+//                 $response['message']= "Tester user not registered in our database";
+//                 $response['response']=false;
+//                 $errorCode = 401;
+//                 return $this->response->setJSON($response)->setStatusCode($errorCode);
+//             }
+//             else
+//             {
+//                 $response['message']= "Invalid user token";
+//                 $response['response']=false;
+//                 $response['code']= 401;
+//                 $response['result_data'] = [];
+//                 $response['return_data'] = [];
+//                 $finalResponse = $this->userlibrary->generateResponse($response);
+//                 return $this->response->setJSON($finalResponse);
+//             } 
+//         }
+        
+//         $checkTimeoutStatus = true;
+//         if(!$byPass)
+//         {
+//             $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+//         }
+        
+//         if(!$checkTimeoutStatus)
+//         {
+//             return redirect()->to($logoutUrl);
+//         }
+
+//         $rules = [
+//             'username'=>'required',
+//             'phone'=>'required',
+//             'address_1'=>'required',
+//             'address_2'=>'required',
+//             'profile_img'=>'required'
+//         ];
+    
+//         if(!$this->validate($rules))
+//         {
+//             $response['message'] = $this->validator->getErrors();
+//             $response['response'] = false;
+//             $response['code'] = 401;
+//             $response['result_data'] = [];
+//             $inputData = $this->request->getJSON();
+//             $response['return_data'] = $inputData;
+
+//             $finalResponse = $this->userlibrary->generateResponse($response);
+//             return $this->response->setJSON($finalResponse);
+//         }
+    
+//         $json_data = $this->request->getJSON();
+
+//         $data = array(
+//             'uid'=>$uid,
+//             'username'=>trim($json_data->username),
+//             'phone'=>trim($json_data->phone),
+//             'address_1'=>trim($json_data->address_1),
+//             'address_2'=>trim($json_data->address_2),
+//             'profile_img'=>trim($json_data->profile_img)
+//         );
+
+//         $encryptedData = $this->userlibrary->encryptRowForSpecificColumns((object)$data,['username','phone']);
+
+//         unset($encryptedData->address_1);
+//         unset($encryptedData->address_2);
+
+//         $rowId = $this->userlibrary->insertUserDataInProfileChangeHistory($uid);
+//         if($rowId)
+//         {
+//             $this->usermodel->updateUserData((array)$encryptedData);
+//             $response['message'] = "Profile updated successfully";
+//             $response['code'] = 200;
+//             $response['response'] = true;
+//             $response['result_data'] = [];
+//             $response['return_data'] = [];
+//             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$data,$response);
+//         }
+//         else
+//         {
+//             $response['message'] = "Profile Not updated : Reason (error in user profile history)";
+//             $response['code'] = 401;
+//             $response['response'] = false;
+//             $response['result_data'] = [];
+//             $response['return_data'] = $data;
+//         }
+        
+//         $finalResponse = $this->userlibrary->generateResponse($response);
+//         return $this->response->setJSON($finalResponse);
+//     }
+
+// }
 
 
 // Not involve in encryption : 
@@ -813,104 +1294,218 @@ public function generate_tester_token()
 	
 }
 
-// Done encryption : filtered
+// Done encryption
 public function get_all_users()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
     $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    $checkTimeoutStatus = true;
-    if(!$byPass)
-    {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
-    }
+      $response = [];
+      $errorCode = '';
+  
+      $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+  
+      if($token!='')
+      {
+          $uid = '';
+          if($byPass)
+          {
+              $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+          }
+          else
+          {
+              $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+              $uid = $userdata?$userdata->uid:'';
+          }
+  
+          if($uid)
+          {
+              $checkTimeoutStatus = true;
+              if(!$byPass)
+              {
+                  $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+              }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
+              if(!$checkTimeoutStatus)
+              {
+                return redirect()->to($logoutUrl);
+              }
 
-        $rules = [
-        'number_of_records'=>'required',
-        'pagination_number'=>'required'
-    ];
-    
-    if(!$this->validate($rules))
-    {
-        $response['message'] = $this->validator->getErrors();
-        $response['response'] = false;
-        $response['code'] = 401;
+              $rules = [
+                'number_of_records'=>'required',
+                'pagination_number'=>'required'
+            ];
+            
+            if(!$this->validate($rules))
+            {
+                $response['message'] = $this->validator->getErrors();
+                $response['response'] = false;
+                $response['code'] = 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+        
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            }
+            
+            $json_data = $this->request->getJSON();
+            $number_of_records = $json_data->number_of_records;
+            $pagination_number = $json_data->pagination_number;
+            $search = $json_data->search;
+            $result = [];
+            if($search!=null){
+                $result = $this->userlibrary->getFilteredUsers($search,$number_of_records,$pagination_number);
+            }
+            else{
+                $result = $this->userlibrary->getStandardRecords($number_of_records,$pagination_number);
+            }
+        
+              $decryptedUserData = $this->userlibrary->decryptResult($result,['username','first_name','last_name','email','company','phone']);
+            //   $decryptedUserData = $this->userlibrary->decryptMainMenu($result,['username','first_name','last_name','email','company','phone']);
+              $response['message']= "All users details";
+              $response['result_data']= $decryptedUserData;
+              $response['return_data'] = [];
+              $response['response']=true;
+              $response['code']=true;
+              $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$json_data,$response);
+          }
+          else
+          {
+              if($byPass)
+              {
+                  $response['message']= "Tester user not registered in our database";
+                  $response['response']=false;
+                  $errorCode = 401;
+              }
+              else
+              {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+              }
+          }
+      }
+      else
+      {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
         $response['result_data'] = [];
         $response['return_data'] = [];
-
-        $finalResponse = $this->userlibrary->generateResponse($response);
-        return $this->response->setJSON($finalResponse);
-    }
-            
-    $json_data = $this->request->getJSON();
-    $number_of_records = $json_data->number_of_records;
-    $pagination_number = $json_data->pagination_number;
-    $search = $json_data->search;
-    $result = [];
-    if($search!=null){
-        $result = $this->userlibrary->getFilteredUsers($search,$number_of_records,$pagination_number);
-    }
-    else{
-        $result = $this->userlibrary->getStandardRecords($number_of_records,$pagination_number);
-    }
-
-        $decryptedUserData = $this->userlibrary->decryptResult($result,['username','first_name','last_name','email','company','phone']);
-        $response['message']= "All users details";
-        $response['result_data']= $decryptedUserData;
-        $response['return_data'] = [];
-        $response['response']=true;
-        $response['code']=true;
-        $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,$json_data,$response);
-    
+      }
+  
       $finalResponse = $this->userlibrary->generateResponse($response);
       return $this->response->setJSON($finalResponse);
 }
 
 
 // Working code : 
-// Done encryption with normal and auth9 users / filtered
+// Done encryption with normal and auth9 users
 public function get_main_menu()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
-    }
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
             
-    $result = $this->userlibrary->getMainManuData($uid);
-
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
+            $result = $this->userlibrary->getMainManuData($uid);
+       
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            $response['message']= "Main manu module data";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
     }
-    $response['message']= "Main manu module data";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
 
@@ -1053,66 +1648,176 @@ public function upload_user_profile_img()
 }
 
 
-// Done encryption : filtered
+// I think this function is not in use : 
 public function get_user_profile_img()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
-    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->usermodel->getUserDetails($uid);
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->route('logout');
+            }
+            $decryptedUserData = $this->userlibrary->decryptRow($result,['first_name']);
+            $response['message']= "User profile pic";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = array("first_name"=>$decryptedUserData->first_name,"profile_img"=>$decryptedUserData->profile_img);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->route('logout');
-    }
-    
-    $result = $this->usermodel->getUserDetails($uid);
-
-    $decryptedUserData = $this->userlibrary->decryptRow($result,['first_name']);
-    $response['message']= "User profile pic";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = array("first_name"=>$decryptedUserData->first_name,"profile_img"=>$decryptedUserData->profile_img);
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
 
 }
 
 
-// Done encryption / filtered
+// Done encryption
 public function create_user()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-         
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1197,26 +1902,83 @@ public function create_user()
 }
 
 
-// Done encryption : filtered
+// Done encryption
 public function update_user()
 {
     if ($this->request->getMethod() === 'post') 
     {
 
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
-    $finalResponse = '';
-    $response = [];
-    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
-       
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1227,6 +1989,11 @@ public function update_user()
         $rules = [
             'username'=>'required',
             'phone'=>'required',
+            // 'address_1'=>'required',
+            // 'address_2'=>'required',
+            // 'zip'=>'required',
+            // 'city'=>'required',
+            // 'state'=>'required',
             'company'=>'required',
             'profile_img'=>'required'
         ];
@@ -1249,6 +2016,11 @@ public function update_user()
         $data = array(
             'username'=>trim($json_data->username),
             'phone'=>trim($json_data->phone),
+            // 'address_1'=>trim($json_data->address_1),
+            // 'address_2'=>trim($json_data->address_2),
+            // 'zip'=>trim($json_data->zip),
+            // 'city'=>trim($json_data->city),
+            // 'state'=>trim($json_data->state),
             'company'=>trim($json_data->company),
             'profile_img'=>trim($json_data->profile_img),
             'updated_by'=>$uid
@@ -1281,25 +2053,83 @@ public function update_user()
 }
 
 
-// Done encryption / filtered
+// Done encryption
 public function create_auth_templete()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-       
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1455,137 +2285,363 @@ public function get_all_users_auth_templates()
 
 }
 
-// Done encryption / filtered
+// Done encryption
 public function get_main_menu_auth()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->userlibrary->getMainManuDataAuth($uid);
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            $response['message']= "Main manu auth";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-    
-    $result = $this->userlibrary->getMainManuDataAuth($uid);
-
-    $response['message']= "Main manu auth";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $this->userlibrary->decryptResultArray($result,['name','description','icon_name','link']);
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
-
-
-// Done encryption / filtered
+// Done encryption
 public function get_users_list()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    $checkTimeoutStatus = true;
-    if(!$byPass)
-    {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
-    }
-    
-    $result = $this->userlibrary->getUsersList();
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    if(!$checkTimeoutStatus)
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        return redirect()->to($logoutUrl);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->userlibrary->getUsersList();
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            $response['message']= "get all users";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $result;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
     }
-    $response['message']= "get all users";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $result;
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 
-// Done encryption / filtered
+// Done encryption
 public function get_templates_list()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    $checkTimeoutStatus = true;
-    if(!$byPass)
-    {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
-    }
-    
-    $result = $this->userlibrary->getallTemplatesList();
+    $response = [];
+	$errorCode = '';
 
-    if(!$checkTimeoutStatus)
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        return redirect()->to($logoutUrl);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+            
+            $result = $this->userlibrary->getallTemplatesList();
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            $response['message']= "get all templates list";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $result;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
     }
-    $response['message']= "get all templates list";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $result;
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
-// Done encryption / filtered
+// Done encryption
 public function get_template()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-       
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1642,25 +2698,83 @@ public function get_template()
 }
 
 
-// No encryption involve : / filtered
+// No encryption involve : 
 public function save_user_menu_authentication()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+         // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-       
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1719,102 +2833,274 @@ public function save_user_menu_authentication()
 
 }
 
-// No encryption involve / filtered
+// No encryption involve : 
 public function get_active_users()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $count = $this->usermodel->getActiveUsersCount();
+
+            $response['message']= "get active users";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = ["name"=>"Active Users","count"=>$count];
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-    
-    $count = $this->usermodel->getActiveUsersCount();
-
-    $response['message']= "get active users";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = ["name"=>"Active Users","count"=>$count];
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 
 // Pending : Not correct data in the table : I think this function is not in use
-// Done encryption / filtered
+// Done encryption
 public function get_all_visual_metrics()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-        $checkTimeoutStatus = true;
-        if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
+    {
+        $uid = '';
+        if($byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
         }
 
-        if(!$checkTimeoutStatus)
+        if($uid)
         {
-            return redirect()->to($logoutUrl);
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $resultData = $this->userlibrary->getVisualMetric();
+           
+            $response['message']= "All visual metric data";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['visual_name','visual_description']);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
         }
-        
-        $resultData = $this->userlibrary->getVisualMetric();
-        
-        $response['message']= "All visual metric data";
-        $response['code']= 200;
-        $response['response']=true;
-        $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['visual_name','visual_description']);
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
         $response['return_data'] = [];
-        $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-    
+    }
+
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 
-// No encryption involve / filtered
+// No encryption involve : 
 public function update_user_analyticals()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
-        $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
      
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1865,26 +3151,83 @@ public function update_user_analyticals()
 
 
 // Pending : Still do not have fair idea and I think its not in use
-// Done encryption / filtered
+// Done encryption
 public function get_user_analytical_view()
 {
     if ($this->request->getMethod() === 'post') 
     {
 
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-    
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -1933,119 +3276,290 @@ public function get_user_analytical_view()
 }
 
 
-// Done encryption / filtered
+// Done encryption
 public function get_main_menu_list()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $resultData = $this->userlibrary->getMainMenuList();
+            $response['message']= "Get main menu list";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['name']);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-            
-    $resultData = $this->userlibrary->getMainMenuList();
-    $response['message']= "Get main menu list";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $this->userlibrary->decryptResultArray($resultData,['name']);
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
 
 }
 
-//Encryption not done for himalaya table / filtered 
+
 public function get_himalaya_master_data_count()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
 
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $count = $this->usermodel->getHimalayaMasterDataCount();
+
+            $response['message']= "get himalaya data";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] =  ["name"=>"Himalaya","count"=>$count];
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-    
-    $count = $this->usermodel->getHimalayaMasterDataCount();
-
-    $response['message']= "get himalaya data";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] =  ["name"=>"Himalaya","count"=>$count];
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 // Done encryption partially(Pending from superadmin user who get analytical data)
-// Done encryption / filtered
+// Done encryption
 public function get_user_dashboard()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $resultData = $this->userlibrary->getUsersDashboard($uid);
+            // print_r($resultData);die;
+            $response['message']= "Get user dashboard data";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = is_array($resultData)?$this->userlibrary->decryptResult($resultData,['visual_name','visual_description']):$this->userlibrary->decryptRow($resultData,['visual_name','visual_description','username','email','first_name','last_name','company','phone']);
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-    
-    $resultData = $this->userlibrary->getUsersDashboard($uid);
-    $response['message']= "Get user dashboard data";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = is_array($resultData)?$this->userlibrary->decryptResult($resultData,['visual_name','visual_description']):$this->userlibrary->decryptRow($resultData,['visual_name','visual_description','username','email','first_name','last_name','company','phone']);
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 
-// Done encryption / no filter required
+// Done encryption 
 public function get_user_types_list()
 {
     $result = $this->usermodel->getUserTypesList();
@@ -2059,30 +3573,60 @@ public function get_user_types_list()
     return $this->response->setJSON($finalResponse);
 }
 
-// filtered
+
 public function get_user_auths()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-        $checkTimeoutStatus = true;
-        if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
+    {
+        $uid = '';
+        if($byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
         }
 
-        if(!$checkTimeoutStatus)
+        if($uid)
         {
-            return redirect()->to($logoutUrl);
-        }
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
 
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+
+            
         $rules = [
             'user_id'=>'required',
         ];
@@ -2100,9 +3644,11 @@ public function get_user_auths()
             return $this->response->setJSON($finalResponse);
         }
     
-            $json_data = $this->request->getJSON();
-            $user_id=trim($json_data->user_id);
-    
+                $json_data = $this->request->getJSON();
+        
+                $user_id=trim($json_data->user_id);
+           
+
             $resultData = $this->userlibrary->getUserAuths($user_id);
             $response['message']= "User auths";
             $response['code']= 200;
@@ -2110,31 +3656,116 @@ public function get_user_auths()
             $response['result_data'] = $resultData;
             $response['return_data'] = [];
             $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-     
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
 
-// filtered
 public function get_user_all_analytical_views()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-      
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -2180,25 +3811,83 @@ public function get_user_all_analytical_views()
 
 }
 
-// filtered
+
 public function change_users_visual_metric_status()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-      
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -2259,26 +3948,83 @@ public function change_users_visual_metric_status()
 
 }
 
-// filtered
+
 public function generate_project_access_key()
 {
     if ($this->request->getMethod() === 'post') 
     {
 
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
-    $finalResponse = '';
-    $response = [];
-    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-       $logoutUrl = $_ENV['app_baseURL'].'logout';
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
 
+
+        $response = [];
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -2337,25 +4083,83 @@ public function generate_project_access_key()
     }
 }
 
-// filtered
 public function generate_user_access_key()
 {
+    // echo "generate_user_access_key";die;
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-      
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -2412,66 +4216,182 @@ public function generate_user_access_key()
                 $response['return_data'] = $responseResult['return_data'];
            }
             
+     
         $finalResponse = $this->userlibrary->generateResponse($response);
         return $this->response->setJSON($finalResponse);
     }
 }
 
-// filtered
+
 public function get_all_projects_list()
 {
-    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-    $resultArray = $this->userlibrary->getUserIdByToken($token);
-  
-    $byPass = $resultArray['byPass'];
-    $uid = $resultArray['uid'];
+    $byPass = false;
+    $tester_token = '';
     $finalResponse = '';
-    $response = [];
     // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-     $logoutUrl = $_ENV['app_baseURL'].'logout';
+    $logoutUrl = $_ENV['app_baseURL'].'logout';
  
-    $checkTimeoutStatus = true;
-    if(!$byPass)
+      if($this->request->getHeader('testerEmail')!=''){
+            $response = $this->testerToken();
+            if(!$this->testerToken()['response'])
+            {
+                return $this->response->setJSON($this->testerToken());
+            }
+            else
+            {
+                    $byPass = true;
+                    $tester_token = $this->request->getHeader('Authorization')->getValue();
+            }
+      }
+
+    $response = [];
+	$errorCode = '';
+
+    $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+
+    if($token!='')
     {
-        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid)
+        {
+            $checkTimeoutStatus = true;
+            if(!$byPass)
+            {
+                $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
+            }
+
+            if(!$checkTimeoutStatus)
+            {
+                return redirect()->to($logoutUrl);
+            }
+            
+            $resultData = $this->userlibrary->getAllProjectsList();
+            $response['message']= "All projects list";
+            $response['code']= 200;
+            $response['response']=true;
+            $response['result_data'] = $resultData;
+            $response['return_data'] = [];
+            $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        }
+        else
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+            }
+        }
+    }
+    else
+    {
+        $response['message']= "No user token found";
+		$response['response'] = false;
+        $response['code']= 401;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
     }
 
-    if(!$checkTimeoutStatus)
-    {
-        return redirect()->to($logoutUrl);
-    }
-    
-    $resultData = $this->userlibrary->getAllProjectsList();
-    $response['message']= "All projects list";
-    $response['code']= 200;
-    $response['response']=true;
-    $response['result_data'] = $resultData;
-    $response['return_data'] = [];
-    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
-        
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
+
 }
 
-// filtered
+
 public function create_project()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-       
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
@@ -2533,25 +4453,83 @@ public function create_project()
 }
 
 
-// filtered
+
 public function user_assign_api()
 {
     if ($this->request->getMethod() === 'post') 
     {
-        $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
-        $resultArray = $this->userlibrary->getUserIdByToken($token);
-      
-        $byPass = $resultArray['byPass'];
-        $uid = $resultArray['uid'];
-        $finalResponse = '';
+
+        $byPass = false;
+        $tester_token = '';
+        //  $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+        $logoutUrl = $_ENV['app_baseURL'].'logout';
+     
+          if($this->request->getHeader('testerEmail')!=''){
+                $response = $this->testerToken();
+                if(!$this->testerToken()['response'])
+                {
+                    return $this->response->setJSON($this->testerToken())->setStatusCode(401);
+                }
+                else
+                {
+                        $byPass = true;
+                        $tester_token = $this->request->getHeader('Authorization')->getValue();
+                }
+          }
+
+
         $response = [];
-        // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
-         $logoutUrl = $_ENV['app_baseURL'].'logout';
-      
+        $errorCode = '';
+        $finalResponse = '';
+
+        $token = $tester_token!=''?$tester_token:$this->request->getHeader('token');
+        if($token=='')
+        {
+            $response['message']= "No user token";
+            $response['response'] = false;
+            $response['code'] = 401;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+            $finalResponse = $this->userlibrary->generateResponse($response);
+            return $this->response->setJSON($response);
+        }
+
+        $uid = '';
+        if($byPass)
+        {
+            $uid = $this->usermodel->getUserId($this->request->getHeader('testerEmail')->getValue());
+        }
+        else
+        {
+            $userdata = $this->userlibrary->verifyTokenIsValid($token->getValue());
+            $uid = $userdata?$userdata->uid:'';
+        }
+
+        if($uid=='')
+        {
+            if($byPass)
+            {
+                $response['message']= "Tester user not registered in our database";
+                $response['response']=false;
+                $errorCode = 401;
+                return $this->response->setJSON($response)->setStatusCode($errorCode);
+            }
+            else
+            {
+                $response['message']= "Invalid user token";
+                $response['response']=false;
+                $response['code']= 401;
+                $response['result_data'] = [];
+                $response['return_data'] = [];
+                $finalResponse = $this->userlibrary->generateResponse($response);
+                return $this->response->setJSON($finalResponse);
+            } 
+        }
+        
         $checkTimeoutStatus = true;
         if(!$byPass)
         {
-            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+            $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token->getValue());
         }
         
         if(!$checkTimeoutStatus)
