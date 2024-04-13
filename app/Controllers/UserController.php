@@ -735,7 +735,8 @@ public function logout()
 
 
 // Done with encryption
-public function get_user_data()
+// Working method
+public function get_user_data_xxx()
 {
     $byPass = false;
     $tester_token = '';
@@ -824,6 +825,41 @@ public function get_user_data()
     $finalResponse = $this->userlibrary->generateResponse($response);
     return $this->response->setJSON($finalResponse);
 
+}
+
+public function get_user_data()
+{
+    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
+    $resultArray = $this->userlibrary->getUserIdByToken($token);
+  
+    $byPass = $resultArray['byPass'];
+    $uid = $resultArray['uid'];
+    $finalResponse = '';
+    $response = [];
+
+    $checkTimeoutStatus = true;
+    if(!$byPass)
+    {
+        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+    }
+
+    if(!$checkTimeoutStatus)
+    {
+        return redirect()->route('logout');
+    }
+    
+    $result = $this->usermodel->getUserDetails($uid);
+
+    $decryptedUserData = $this->userlibrary->decryptRow($result,['username','email','first_name','last_name','company','phone']);
+    $response['message']= "Single user details";
+    $response['code']= 200;
+    $response['response']=true;
+    $response['result_data'] = $decryptedUserData;
+    $response['return_data'] = [];
+    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+    
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
 }
 
 
@@ -4528,7 +4564,6 @@ public function user_assign_api()
         
         $userResponse = $this->userlibrary->userAssignApi($data);
 
-        die;
         if($userResponse['response'])
         {
             $response['message'] = $userResponse['message'];

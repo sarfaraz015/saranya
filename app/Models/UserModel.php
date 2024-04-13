@@ -1002,7 +1002,76 @@ public function checkProjectAccessKeyExists($projectCode)
 }
 
 
+public function getUserProjAccessTokenData($userId,$projectCode)
+{
+        $result = $this->db->table('user_proj_access_token') 
+        ->where('user_id',$userId) 
+        ->where('project_code',$projectCode)
+        ->get()
+        ->getRow();
+       return $result;
+}
 
+public function insertIntoUserMapperApis($data)
+{
+        $this->db->table('user_mapper_apis')
+        ->insert($data);
+        $insertedID = $this->db->insertID();
+        return $insertedID;
+}
+
+public function checkApiAlreadyAssigned($userProjAccessTokenCode,$apiCode)
+{
+        $result = $this->db->table('user_mapper_apis') 
+        ->where('user_mapper_api_code',$userProjAccessTokenCode) 
+        ->where('api_code',$apiCode)
+        ->get()
+        ->getRow();
+        if($result){
+                return true;
+        }
+        else{
+                return false;   
+        }
+}
+
+
+public function validateProjectAccessKey($projectAccessKey)
+{
+        $result = $this->db->table('projects')  
+        ->where('access_token',$projectAccessKey)
+        ->get()
+        ->getRow();
+       return $result;
+}
+
+public function getAllUsersAccessKeysForProject($projectCode)
+{
+        $result = $this->db->table('user_proj_access_token')  
+        ->where('project_code',$projectCode)
+        ->get()
+        ->getResult();
+       return $result;
+}
+
+
+public function getUserIdByTokenFromUsersSessionTokens($token)
+{
+        $result = $this->db->table('users_session_tokens')  
+        ->where('token',$token)
+        ->get()
+        ->getRow();
+        return $result; 
+}
+
+public function getUserIdByTokenFromUserProjAccessToken($token)
+{
+        $result = $this->db->table('user_proj_access_token')  
+        ->where('access_token',$token)
+        ->get()
+        ->getRow();
+        return $result; 
+}
 
 
 

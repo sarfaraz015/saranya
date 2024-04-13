@@ -26,6 +26,8 @@ class Filters extends BaseConfig
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
         'LoginFilter' => \App\Filters\LoginFilter::class,
+        'ValidateUserAuthentication'=>\App\Filters\ValidateUserAuthentication::class,
+        'CheckUsersTimeOut'=>\App\Filters\CheckUsersTimeOut::class
     ];
 
     /**

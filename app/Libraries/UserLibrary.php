@@ -2399,7 +2399,111 @@ public function createProject($data)
 
 public function userAssignApi($data)
 {
+      $response = [];
+      $userProjAccessTokenData = $this->usermodel->getUserProjAccessTokenData($data['user_id'],$data['project_code']);
+
+      $userProjAccessTokenCode = $userProjAccessTokenData->code;
+  
+     $status = $this->usermodel->checkApiAlreadyAssigned($userProjAccessTokenCode,$data['api_code']);
+
+     if($status){
+        $response['message'] = "Api is already assigned to the user";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        return $response;
+     }
+
+    $insertData = array(
+        'code'=>$this->generateStringCode(),
+        'user_mapper_api_code'=>$userProjAccessTokenCode,
+        'api_code'=>$data['api_code'],
+        'created_by'=>$data['created_by'],
+        'updated_by'=>$data['updated_by']
+    );
+
+     $rowId = $this->usermodel->insertIntoUserMapperApis($insertData);
+     
+    if($rowId){
+        $response['message'] = "Api assigned successfully";
+        $response['code'] = 200;
+        $response['response'] = true;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+    else{
+        $response['message'] = "Api assigned failed";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
     
+    return $response;
+}
+
+
+public function validateAccessKeys($projectAccessKey,$userAccessKey)
+{
+    $response = [];
+    $result = $this->usermodel->validateProjectAccessKey($projectAccessKey);
+
+    if($result)
+    {
+         $allAccessKeys = $this->usermodel->getAllUsersAccessKeysForProject($result->code);
+        $allAccessKeysArray = array_column($allAccessKeys,'access_token');
+
+        if(in_array($userAccessKey,$allAccessKeysArray))
+        {
+            $response['message'] = "Project and user keys are validated successfully";
+            $response['code'] = 200;
+            $response['response'] = true;
+            $response['result_data'] = [];
+            $response['return_data'] = []; 
+        }
+        else
+        {
+            $response['message'] = "Invalid user access key";
+            $response['code'] = 401;
+            $response['response'] = false;
+            $response['result_data'] = [];
+            $response['return_data'] = [];
+        }
+    }
+    else
+    {
+        $response['message'] = "Invalid project access key";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+    }
+
+    return $response;
+}
+
+
+public function getUserIdByToken($token)
+{
+    $finalArray = [];
+    $uid = '';
+    $result = $this->usermodel->getUserIdByTokenFromUsersSessionTokens($token);
+
+    if($result)
+    {
+        $finalArray['uid'] = $result->uid;
+        $finalArray['byPass'] = false;
+    }
+    else
+    {
+        $result = $this->usermodel->getUserIdByTokenFromUserProjAccessToken($token);
+        $finalArray['uid'] = $result->user_id;
+        $finalArray['byPass'] = true;
+    }
+
+    // print_r($finalArray);die;
+    return $finalArray;
 }
 
 
