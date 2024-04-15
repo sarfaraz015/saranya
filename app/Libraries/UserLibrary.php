@@ -2601,5 +2601,26 @@ public function filteredUserExists($email)
 }
 
 
+public function getAccessKeyUsersList()
+{
+    $result = $this->usermodel->getAccessKeyUsersList();
+    $userIdArrays = array_unique(array_column($result,'user_id'));
+    $usersList = $this->usermodel->getUsersByIds($userIdArrays);
+    $decryptData = $this->decryptResult($usersList,['username']);
+
+    $finalArray = $this->getSpecificColumnsFromResult($decryptData,['id','uid','username']);
+    return $finalArray;
+}
+
+
+public function getApiList()
+{
+    $result = $this->usermodel->getApiList();
+    $decryptData = $this->decryptResult($result,['api_url','api_endpoint','description']);
+    $finalArray = $this->getSpecificColumnsFromResult($decryptData,['id','code','api_url','api_endpoint']);
+    return $finalArray;
+}
+
+
 
 }

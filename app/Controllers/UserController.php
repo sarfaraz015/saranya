@@ -2615,6 +2615,80 @@ public function user_assign_api()
 
 }
 
+
+public function access_key_users_list()
+{
+    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
+    $resultArray = $this->userlibrary->getUserIdByToken($token);
+  
+    $byPass = $resultArray['byPass'];
+    $uid = $resultArray['uid'];
+    $finalResponse = '';
+    $response = [];
+    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+     $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+    $checkTimeoutStatus = true;
+    if(!$byPass)
+    {
+        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+    }
+
+    if(!$checkTimeoutStatus)
+    {
+        return redirect()->to($logoutUrl);
+    }
+    
+    $resultData = $this->userlibrary->getAccessKeyUsersList();
+    $response['message']= "Get all access token users list";
+    $response['code']= 200;
+    $response['response']=true;
+    $response['result_data'] = $resultData;
+    $response['return_data'] = [];
+    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
+}
+
+
+public function get_api_list()
+{
+    $token = $this->request->getHeader('userAccessKey')?$this->request->getHeader('userAccessKey')->getValue():$this->request->getHeader('token')->getValue();
+    $resultArray = $this->userlibrary->getUserIdByToken($token);
+  
+    $byPass = $resultArray['byPass'];
+    $uid = $resultArray['uid'];
+    $finalResponse = '';
+    $response = [];
+    // $logoutUrl = $_ENV['app_baseURL'].'public'.DIRECTORY_SEPARATOR.'logout';
+     $logoutUrl = $_ENV['app_baseURL'].'logout';
+ 
+    $checkTimeoutStatus = true;
+    if(!$byPass)
+    {
+        $checkTimeoutStatus = $this->userlibrary->checkTimeOut($userId=null,$token);
+    }
+
+    if(!$checkTimeoutStatus)
+    {
+        return redirect()->to($logoutUrl);
+    }
+    
+    $resultData = $this->userlibrary->getApiList();
+    $response['message']= "Get all api list";
+    $response['code']= 200;
+    $response['response']=true;
+    $response['result_data'] = $resultData;
+    $response['return_data'] = [];
+    $this->userlibrary->storeLogs(debug_backtrace(),$uid,$token,null,$response);
+        
+    $finalResponse = $this->userlibrary->generateResponse($response);
+    return $this->response->setJSON($finalResponse);
+}
+
+
+
 ################################ TESTING AREA #######################
 
 

@@ -1075,6 +1075,33 @@ public function getUserIdByTokenFromUserProjAccessToken($token)
 
 
 
+public function getAccessKeyUsersList()
+{
+        $result = $this->db->table('user_proj_access_token')  
+        ->get()
+        ->getResult();
+        return $result; 
+}
+
+public function getUsersByIds($usersArray)
+{
+        $result = $this->db->table('users')  
+        ->whereIn('uid',$usersArray)
+        ->get()
+        ->getResult();
+        return $result;   
+}
+
+public function getApiList()
+{
+        $result = $this->db->table('api_url_endpoints')  
+        ->get()
+        ->getResult();
+        return $result;  
+}
+
+
+
 ############################ TESTING AREA #########################################
 
 

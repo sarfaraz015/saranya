@@ -5,13 +5,18 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\I18n\Time;
+use App\Libraries\UserLibrary;
 // use CodeIgniter\Files\File;
 
 class TestController extends BaseController
 {
 
+    public $userlibrary;
+    public $db;
     public function __construct(){
         helper("filesystem");
+        $this->db = \Config\Database::connect();
+        $this->userlibrary = new UserLibrary();
         // echo "From test controller";
     }
 
@@ -298,6 +303,27 @@ public function testAbout()
     return $this->response->setJSON(['message'=>"Testing testAbout"]);
 }
 
+
+public function insertQueries()
+{
+//###################### INSERT INTO  menu_main_modules #####################   
+    // $data = array(
+    //     'code'=>$this->userlibrary->generateStringCode(),
+    //     'name'=>$this->userlibrary->encryptValue('Access Key Management'),
+    //     'description'=>$this->userlibrary->encryptValue('For api access purpose'),
+    //     'icon_name'=>$this->userlibrary->encryptValue('award'),
+    //     'link'=>$this->userlibrary->encryptValue('developerApitest.html'),
+    //     'order_no'=>12
+    // );
+    // $result = $this->db->table('menu_main_modules')
+    //          ->insert($data);
+    // echo $result;
+    
+    die;
+
+ ##########################################################################   
+
+}
 
 
 

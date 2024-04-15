@@ -18,7 +18,7 @@ $routes->get('/test', 'UserController::test');
 $routes->post('/register', 'UserController::register');
 $routes->post('/login', 'UserController::login');
 $routes->get('/logout', 'UserController::logout');
-$routes->get('/get_user_data', 'UserController::get_user_data',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_user_data', 'UserController::get_user_data');
 $routes->get('/testcode', 'UserController::testcode');
 $routes->get('/blockUserMessage', 'UserController::blockUserMessage');
 $routes->get('/testMessage', 'UserController::testMessage');
@@ -70,14 +70,14 @@ $routes->get('/get_user_types_list', 'UserController::get_user_types_list');
 $routes->post('/get_user_auths', 'UserController::get_user_auths',['filter' => 'ValidateUserAuthentication']);
 $routes->post('/get_user_all_analytical_views', 'UserController::get_user_all_analytical_views',['filter' => 'ValidateUserAuthentication']);
 $routes->post('/change_users_visual_metric_status', 'UserController::change_users_visual_metric_status',['filter' => 'ValidateUserAuthentication']);
-
 $routes->post('/generate_project_access_key', 'UserController::generate_project_access_key',['filter' => 'ValidateUserAuthentication']);
 $routes->post('/generate_user_access_key', 'UserController::generate_user_access_key',['filter' => 'ValidateUserAuthentication']);
 $routes->get('/get_all_projects_list', 'UserController::get_all_projects_list',['filter' => 'ValidateUserAuthentication']);
-
 $routes->post('/create_project', 'UserController::create_project',['filter' => 'ValidateUserAuthentication']);
-
 $routes->post('/user_assign_api', 'UserController::user_assign_api',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/access_key_users_list', 'UserController::access_key_users_list',['filter' => 'ValidateUserAuthentication']);
+$routes->get('/get_api_list', 'UserController::get_api_list',['filter' => 'ValidateUserAuthentication']);
+
 
 // #################### ApiController ###################
 
@@ -96,6 +96,7 @@ $routes->get('/total_depreciated_api_count', 'ApiController::total_depreciated_a
 
 
 // ################## TESTING URLS ###########################
+$routes->get('/insertQueries', 'TestController::insertQueries');
 
 $routes->post('/testAbout', 'TestController::testAbout');
 
