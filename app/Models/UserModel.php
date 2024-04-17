@@ -976,6 +976,15 @@ public function checkUserAccessTokenExistsForProject($userId,$projectId)
      }
 }
 
+public function getProjectExpiryDate($projectId)
+{
+        $result = $this->db->table('projects')
+        ->where('code', $projectId)
+        ->get()
+        ->getRow();
+        return $result;
+}
+
 
 
 public function getAllProjectsList()

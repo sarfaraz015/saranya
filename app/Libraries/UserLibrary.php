@@ -2309,9 +2309,73 @@ public function generateProjectAccessKey($projectCode,$data)
     
 }
 
+// public function generateUserAccessKey_xxx($data)
+// {
+//     $response = [];
+
+//     if($this->usermodel->checkUserAccessTokenExistsForProject($data['user_id'],$data['project_code']))
+//     {
+//         $response['message'] = "User access token already exists for this user for project";
+//         $response['code'] = 401;
+//         $response['response'] = false;
+//         $response['result_data'] = [];
+//         $response['return_data'] = [];
+//         return $response;
+//     }
+
+//     $code = $this->generateStringCode();
+//     $getUserAccessToken = $this->getUserAccessToken();
+//     $data['code'] = $code;
+//     $data['access_token'] = $getUserAccessToken;
+
+//     $status = $this->usermodel->insertIntoUserProjAccessToken($data);
+   
+//     if($status)
+//     {
+//         $response['message'] = "User access key generated successfully";
+//         $response['code'] = 200;
+//         $response['response'] = true;
+//         $response['result_data'] = ["user_access_key"=>$getUserAccessToken];
+//         $response['return_data'] = [];
+//     }
+//     else
+//     {
+//         $response['message'] = "User access key generation failed";
+//         $response['code'] = 401;
+//         $response['response'] = false;
+//         $response['result_data'] = [];
+//         $response['return_data'] = [];
+//     }
+//     return $response;
+
+// }
+
+// Checking expiry date of project
 public function generateUserAccessKey($data)
 {
     $response = [];
+
+    // Check peoject validity
+    $projectResult = $this->usermodel->getProjectExpiryDate($data['project_code']);
+    $expiryDateTime = $projectResult->valid_till;
+    $projectExpityDateTime = strtotime($expiryDateTime);
+
+    $currentDateTime = time();
+    if($currentDateTime >= $projectExpityDateTime)
+    {
+        $response['message'] = "Project access key is expired. Failed to create the user access key";
+        $response['code'] = 401;
+        $response['response'] = false;
+        $response['result_data'] = [];
+        $response['return_data'] = [];
+        return $response;
+    }
+
+    // check if user access key validity is greater than project
+
+    
+
+    die;
 
     if($this->usermodel->checkUserAccessTokenExistsForProject($data['user_id'],$data['project_code']))
     {

@@ -1,3 +1,8 @@
+# Install composer 
+    - version 2.5.8
+
+# php version - 8.1.17
+
 # Build 
 - for initial setup `composer create-project codeigniter4/appstarter meramerchattest`
 - for change the environment settings `.env`
@@ -5,13 +10,14 @@
     - change the base url `app_baseURL = 'http://localhost:8080/'`
     - change the database settings as below 
     ```
-    database.default.hostname = 'mnserviceproviders.com'
-    database.default.database = 'build_mminvoice_flow'
-    database.default.username = 'build_usr_mminvoice_flow'
-    database.default.password = '0945m^FJiL'
-    database.default.DBDriver = MySQLi
-    database.default.DBPrefix =
-    database.default.port = '3307'
+database.default.hostname = 'mnsp.co.in:49152'
+database.default.database = 'build_mminvoice_flow'
+database.default.username = 'build_usr_mminvoice_flow'
+database.default.password = '0945m^FJiL'
+database.default.DBDriver = MySQLi
+database.default.DBPrefix =
+database.default.port = '3306'
+
     ```
  - make the directory re-writable mode `writable`.
 
